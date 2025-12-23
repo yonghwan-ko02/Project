@@ -32,6 +32,7 @@ jobs:
 
       - name: Convert Marp to HTML
         run: |
+          mkdir -p public
           marp docs/presentation.md -o public/index.html --html
 
       - name: Upload artifact
