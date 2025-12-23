@@ -8,15 +8,35 @@ backgroundImage: url('https://marp.app/assets/hero-background.svg')
 style: |
   section {
     font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif;
+    font-size: 24px;
+    padding: 40px;
   }
   h1 {
     color: #2c3e50;
+    font-size: 48px;
+    margin-bottom: 0.5em;
   }
   h2 {
     color: #e67e22;
+    font-size: 36px;
+    margin-bottom: 0.4em;
+  }
+  h3 {
+    font-size: 28px;
+    margin-bottom: 0.3em;
+  }
+  ul, ol {
+    font-size: 22px;
+    line-height: 1.4;
+  }
+  table {
+    font-size: 20px;
   }
   strong {
     color: #e74c3c;
+  }
+  blockquote {
+    font-size: 20px;
   }
 
 ---
