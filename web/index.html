@@ -405,28 +405,100 @@
             top: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0, 0, 0, 0.7);
+            background-color: rgba(0, 0, 0, 0.75);
             display: flex;
             align-items: center;
             justify-content: center;
-            backdrop-filter: blur(5px);
+            backdrop-filter: blur(8px);
         }
 
         .modal-content {
-            background-color: #1a1a2e;
-            padding: 30px;
-            border-radius: 15px;
+            background: linear-gradient(145deg, #1e2024, #23272b);
+            padding: 35px;
+            border-radius: 20px;
             width: 90%;
-            max-width: 400px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            max-width: 450px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.08);
             color: #fff;
-            text-align: center;
+            text-align: left;
         }
 
         .modal h2 {
             color: #ff6b6b;
             margin-top: 0;
+            margin-bottom: 15px;
+            font-size: 22px;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .modal-body p {
+            font-size: 15px;
+            line-height: 1.6;
+            color: #e0e0e0;
+            margin-bottom: 20px;
+        }
+
+        .guide-box {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 13px;
+            color: #ccc;
+            margin-bottom: 20px;
+            border-left: 3px solid #4facfe;
+        }
+
+        .guide-box ol {
+            padding-left: 20px;
+            margin: 5px 0;
+        }
+
+        .guide-box li {
+            margin-bottom: 5px;
+        }
+
+        .modal-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            margin-top: 25px;
+        }
+
+        .btn-modern {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(79, 172, 254, 0.4);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(79, 172, 254, 0.6);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: #aaa;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
         }
     </style>
     <style>
@@ -521,24 +593,40 @@
 <body>
     <div class="container">
         <!-- API Key Request Modal -->
+
         <div id="apiKeyModal" class="modal" style="display: none;">
             <div class="modal-content">
                 <h2>⚠️ 무료 사용량 초과</h2>
-                <p>Google Gemini 무료 제공량이 소진되었습니다.<br>계속하려면 본인의 <strong>API Key</strong>를 입력해주세요.</p>
-                <div class="input-wrapper" style="margin-top: 20px;">
-                    <input type="password" id="apiKeyInput" placeholder="Google Gemini API Key 입력..."
-                        style="width: 100%;">
+
+                <div class="modal-body">
+                    <p>
+                        Google Gemini의 일일 무료 제공량이 모두 소진되었습니다.<br>
+                        계속 플레이하려면 <strong>본인의 API Key</strong>가 필요합니다.
+                    </p>
+
+                    <div class="guide-box">
+                        <strong>🔑 키 발급 및 사용 방법:</strong>
+                        <ol>
+                            <li><a href="https://aistudio.google.com/app/apikey" target="_blank"
+                                    style="color: #4facfe; text-decoration: underline;">Google AI Studio</a>에서 로그인 후 키를
+                                발급받으세요.</li>
+                            <li>발급된 키(AIza...)를 복사하여 아래 입력창에 붙여넣으세요.</li>
+                        </ol>
+                        <div style="margin-top: 8px; font-size: 11px; opacity: 0.7;">
+                            * 입력한 키는 <strong>저장되지 않으며</strong>, 이번 세션에만 일시적으로 사용됩니다.
+                        </div>
+                    </div>
+
+                    <div class="input-wrapper">
+                        <input type="password" id="apiKeyInput" placeholder="여기에 API Key를 붙여넣으세요..."
+                            style="width: 100%; background: rgba(0,0,0,0.3); border-color: #4facfe;">
+                    </div>
                 </div>
-                <p style="font-size: 12px; color: #aaa; margin-top: 10px;">
-                    * 키는 저장되지 않으며, 이번 세션에만 사용됩니다.<br>
-                    * <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color: #4facfe;">여기서 무료로
-                        발급받으세요</a>
-                </p>
-                <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
-                    <button id="submitApiKeyBtn"
-                        style="background: linear-gradient(45deg, #4facfe 0%, #00f2fe 100%); width: auto;">전송</button>
-                    <button onclick="document.getElementById('apiKeyModal').style.display='none'"
-                        style="background: #333; width: auto;">닫기</button>
+
+                <div class="modal-buttons">
+                    <button class="btn-modern btn-secondary"
+                        onclick="document.getElementById('apiKeyModal').style.display='none'">닫기</button>
+                    <button class="btn-modern btn-primary" id="submitApiKeyBtn">🚀 전송 및 계속하기</button>
                 </div>
             </div>
         </div>
