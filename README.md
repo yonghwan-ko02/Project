@@ -115,6 +115,10 @@ graph TD
     - **Singleton**: LoreKeeper(지식 베이스) 인스턴스 재사용으로 메모리 최적화.
     - **Finite State Machine (FSM)**: 게임의 상태(Neutral -> Reboot/Original) 전이 관리.
 
+### 4. Reliability & Scalability (BYOK System)
+- **Auto-Failover**: Google API Quota Exceeded (429) 에러 발생 시, 시스템이 즉시 감지하고 사용자에게 알림.
+- **Hot-Swapping**: 게임 중단 없이 실시간으로 API Key를 교체(Client-Side Injection)하여 서비스를 지속시키는 **BYOK(Bring Your Own Key)** 아키텍처 구현.
+
 ### 3. Full-Stack Implementation
 - **Responsive Web UI**: Mobile-First 접근 방식으로 설계된 반응형 웹 인터페이스 (CSS Grid/Flexbox).
 - **Deployment**: Docker 컨테이너 개념을 활용한 Render 클라우드 배포 및 환경 변수(`$PORT`)를 통한 동적 바인딩 처리.
