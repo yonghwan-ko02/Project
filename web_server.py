@@ -71,6 +71,7 @@ class GameSession:
         self.history = []
         self.turn_count = 0
         self.initialized = False
+        self.last_failed_input = None
     
     async def initialize(self):
         """게임 초기화"""
@@ -118,6 +119,8 @@ class GameSession:
             error_msg = str(e)
             if "429" in error_msg or "ResourceExhausted" in error_msg:
                 print(f"[WARN] Quota Exceeded detected: {e}")
+                # Save input for auto-retry after key update
+                self.last_failed_input = user_input
                 return {
                     "type": "request_api_key",
                     "message": "⚠️ 무료 사용량이 초과되었습니다. 계속하려면 API Key를 입력해주세요."
@@ -326,6 +329,23 @@ async def websocket_endpoint(websocket: WebSocket, session_id: str):
                         "type": "system", 
                         "message": "✅ API Key가 성공적으로 업데이트되었습니다! 게임을 계속합니다."
                     })
+                    
+                    # Auto-Retry Failed Input (Resume Logic)
+                    if session.last_failed_input:
+                        print(f"[INFO] Auto-retrying failed input: {session.last_failed_input}")
+                        retry_input = session.last_failed_input
+                        session.last_failed_input = None # Clear immediately to prevent loop
+                        
+                        # Notify client that we are thinking again
+                        await websocket.send_json({
+                            "type": "thinking",
+                            "message": "🤔 AI가 다시 생각하는 중..."
+                        })
+                        
+                        # Process the failed input again
+                        response = await session.process_input(retry_input)
+                        await websocket.send_json(response)
+                        
                 else:
                     await websocket.send_json({
                         "type": "error", 
