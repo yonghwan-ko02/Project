@@ -772,6 +772,12 @@
 
                 // 실제 메시지 추가
                 addMessage(data.type, data.message);
+
+                // BYOK Success Check: 성공 메시지가 오면 모달 닫기
+                if (data.type === 'system' && data.message.includes("성공적으로 업데이트")) {
+                    document.getElementById('apiKeyModal').style.display = 'none';
+                    document.getElementById('apiKeyInput').value = ''; // 보안상 초기화
+                }
             }
 
             // 입력 활성화 (Thinking이나 User Echo 단계에서는 활성화하지 않음)
