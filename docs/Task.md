@@ -81,9 +81,10 @@
     - [x] Ollama 연결 실패 시 재시도(Retry) 로직
     - [x] ChromaDB 로드 실패 시 Fallback (메모리 전용 모드 등)
     - [x] 비정상적인 사용자 입력 핸들링 (빈 문자열, 욕설 필터링 등)
-- [x] **사용자 편의성 (UX)**
+- [ ] **사용자 편의성 (UX)**
     - [x] 로딩 인디케이터 (Spinner) 추가 (Story Generation 중)
     - [x] `help`, `restart`, `save`, `load` 등 메타 커맨드 구현
+    - [ ] 자동 오프닝(프롤로그) 구현 (게임 시작 시 상황 묘사)
 - [x] **웹 인터페이스 (Web UI)**
     - [x] FastAPI 백엔드 구축 (`web_server.py`)
     - [x] WebSocket 실시간 통신 구현

@@ -1,32 +1,19 @@
-import os
 from typing import List, Optional
-from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_ollama import ChatOllama
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.messages import SystemMessage, HumanMessage
 from src.core.dungeon_master import DungeonMaster
 from src.core.game_state import GameState
 from src.impl.persona_variants import get_persona_manager
-from dotenv import load_dotenv
-
-load_dotenv()
 
 class DungeonMasterImpl(DungeonMaster):
-    def __init__(self, model_name: str = "gemini-1.5-flash", game_state: Optional[GameState] = None, persona_type: str = "classic"):
-        # Gemini 1.5 Flash 사용 (속도 빠름, 무료 티어)
-        api_key = os.getenv("GOOGLE_API_KEY")
-        if not api_key:
-            raise ValueError("GOOGLE_API_KEY not found in .env file")
-            
-        self.llm = ChatGoogleGenerativeAI(
-            model=model_name, 
-            temperature=0.4,
-            google_api_key=api_key
-        )
+    def __init__(self, model_name: str = "llama3.1:8b-instruct-q4_K_M", game_state: Optional[GameState] = None, persona_type: str = "classic"):
+        # Temperature 낮춤 (0.7 -> 0.4) : 이름/고유명사 일관성 향상
+        self.llm = ChatOllama(model=model_name, temperature=0.4)
         self.persona_manager = get_persona_manager()
         self.current_persona = persona_type
         self.system_prompt = self.persona_manager.get_persona(persona_type)
         self.game_state = game_state
-        print(f"[INFO] DungeonMaster initialized with {model_name}")
         self.conversation_history: List[dict] = []
 
     def set_system_prompt(self, prompt: str) -> None:

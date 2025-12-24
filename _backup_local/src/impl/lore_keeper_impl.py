@@ -1,27 +1,19 @@
 from typing import List
 import time
-import os
 from langchain_community.document_loaders import TextLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_google_genai import GoogleGenerativeAIEmbeddings
+from langchain_ollama import OllamaEmbeddings
 from langchain_chroma import Chroma
 from src.core.lore_keeper import LoreKeeper
-from dotenv import load_dotenv
-
-load_dotenv()
 
 class LoreKeeperImpl(LoreKeeper):
-    def __init__(self, model_name: str = "models/embedding-001", max_retries: int = 3):
+    def __init__(self, model_name: str = "nomic-embed-text:latest", max_retries: int = 3):
         self.model_name = model_name
         self.max_retries = max_retries
         self.documents = []
         self.vector_store = None
         self.embeddings = None
         self.fallback_mode = False
-        
-        self.api_key = os.getenv("GOOGLE_API_KEY")
-        if not self.api_key:
-            print("[WARN] GOOGLE_API_KEY not found. Vector search might fail.")
 
     def _initialize_embeddings(self):
         """Initialize embeddings with retry logic"""
@@ -30,11 +22,8 @@ class LoreKeeperImpl(LoreKeeper):
         
         for attempt in range(self.max_retries):
             try:
-                self.embeddings = GoogleGenerativeAIEmbeddings(
-                    model=self.model_name,
-                    google_api_key=self.api_key
-                )
-                print(f"[OK] Embeddings initialized successfully ({self.model_name})")
+                self.embeddings = OllamaEmbeddings(model=self.model_name)
+                print(f"[OK] Embeddings initialized successfully")
                 return
             except Exception as e:
                 print(f"[WARN] Attempt {attempt + 1}/{self.max_retries} failed: {e}")
