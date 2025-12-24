@@ -63,69 +63,67 @@ python web_server.py
 
 ---
 
-## 🏗️ 프로젝트 구조
+---
 
-```
-Project/
-├── .github/
-│   └── workflows/
-│       └── marp-to-pages.yml    # GitHub Pages 자동 배포
-├── data/
-│   └── story.txt                # 콩쥐팥쥐 원본 텍스트
-├── docs/                        # 📚 프로젝트 문서
-│   ├── Ideation.md              # 초기 아이디어
-│   ├── PRD.md                   # 제품 요구사항 명세서
-## 🤖 AI 공급자 비교 (Local vs Cloud)
+## 🏗️ 시스템 아키텍처 (System Architecture)
 
-이 프로젝트는 **하이브리드 모드**를 지원합니다. `.env` 파일의 `AI_PROVIDER` 설정으로 언제든 전환할 수 있습니다.
+이 프로젝트는 **FastAPI** 기반의 비동기 백엔드와 **Ollama/Gemini** 하이브리드 AI 엔진을 결합하여, 실시간 상호작용이 가능한 이벤트 기반 아키텍처(Event-Driven Architecture)로 설계되었습니다.
 
-| 구분 | 로컬 AI (Ollama) | 클라우드 AI (Google Gemini) |
-| :--- | :--- | :--- |
-| **모델** | Llama 3.1 8B (Quantized) | Gemini 1.5 Flash / 2.0 Lite |
-| **지능/성능** | 준수함 (복잡한 추론은 다소 버거움) | **매우 우수** (긴 문맥 이해 탁월) |
-| **비용/제한** | **무제한 (완전 무료)** | 하루 1,500회 (Free Tier) |
-| **속도** | 사용자 GPU 성능에 비례 | 매우 빠름 (네트워크 의존) |
-| **보안** | **데이터가 외부로 나가지 않음** | 구글 서버로 전송됨 |
-| **배포** | 어려움 (사용자도 Ollama 설치 필요) | **쉬움** (웹사이트 주소만 공유하면 끝) |
-| **추천 용도** | **개발, 테스트, 무제한 플레이** | **친구 공유, 배포, 고성능 체험** |
+### 📐 데이터 흐름도 (Data Flow)
 
-### 모드 변경 방법
-`.env` 파일을 수정하여 모드를 변경할 수 있습니다.
-```ini
-# 로컬 모드 (Ollama)
-AI_PROVIDER=local
-
-# 클라우드 모드 (Gemini)
-AI_PROVIDER=google
-```│   ├── TechStack.md             # 기술 스택 설명
-│   ├── Task.md                  # 개발 작업 목록
-│   ├── Tutorial.md              # 제작 튜토리얼
-│   ├── presentation.md          # 프로젝트 발표 자료
-│   └── GitHub-Actions-설명.md   # CI/CD 워크플로우 설명
-├── src/                         # 💻 소스 코드
-│   ├── lore_keeper.py           # RAG & ChromaDB 관리
-│   ├── dungeon_master.py        # AI 스토리 생성 엔진
-│   └── game_loop.py             # 게임 진행 로직
-├── main.py                      # 프로그램 진입점
-├── requirements.txt             # Python 의존성
-└── README.md                    # 이 문서
+```mermaid
+graph TD
+    User([User]) <-->|WebSocket| Frontend(Web Client)
+    Frontend <-->|Async/Await| Backend[FastAPI Server]
+    
+    subgraph "Core Logic (Domain Layer)"
+        Backend -->|Manage| Session(GameSession)
+        Session -->|Execute| DM[DungeonMaster AI]
+        Session -->|State Tracking| State[GameState]
+    end
+    
+    subgraph "AI & Data Layer"
+        DM -->|RAG Retrieval| LK[LoreKeeper]
+        LK <-->|Similarity Search| VectorDB[(ChromaDB)]
+        DM <-->|Text Generation| LLM((Ollama / Gemini))
+    end
+    
+    classDef client fill:#f9f,stroke:#333,stroke-width:2px;
+    classDef server fill:#bbf,stroke:#333,stroke-width:2px;
+    classDef ai fill:#bfb,stroke:#333,stroke-width:2px;
+    
+    class User,Frontend client;
+    class Backend,Session,State server;
+    class DM,LK,VectorDB,LLM ai;
 ```
 
 ---
 
-## 🛠️ 기술 스택
+## 💡 기술적 핵심 역량 (Core Competencies)
 
-| 구분 | 기술 | 설명 |
-|------|------|------|
-| **언어** | Python 3.10+ | AI/ML 생태계 최적화 |
-| **LLM** | Google Gemini (2.0 Flash Lite) | 빠르고 정확한 클라우드 AI 모델 (Free Tier/High Quota) |
-| **RAG** | LangChain | AI 워크플로우 구축 프레임워크 |
-| **Vector DB** | ChromaDB | 서버리스 임베딩 데이터베이스 |
-| **Web** | FastAPI + HTML/JS | 반응형 웹 인터페이스 |
+이 프로젝트를 통해 다음과 같은 풀스택 및 AI 엔지니어링 역량을 증명합니다.
 
-자세한 내용은 [TechStack.md](docs/TechStack.md)를 참고하세요.
+### 1. Advanced AI Application (RAG & Prompt Engineering)
+- **Hybrid AI Pipeline**: 비용 효율적인 로컬 LLM(Ollama)과 고지능 클라우드 LLM(Gemini)을 상황에 따라 전환하는 **Strategy Pattern** 적용.
+- **RAG (Retrieval-Augmented Generation)**: LangChain과 ChromaDB를 활용하여 원작 소설의 문맥을 검색, 환각(Hallucination)을 줄이고 캐릭터 일관성을 유지.
+- **Dynamic Prompting**: 게임 상태(State)와 사용자 선택(History)에 따라 시스템 프롬프트를 동적으로 재구성하여 스토리의 개연성 확보.
+
+### 2. Modern Backend Engineering
+- **Asynchronous Processing**: `asyncio`를 활용한 완전 비동기 처리로, 다수의 클라이언트가 접속해도 블로킹 없는 쾌적한 WebSocket 통신 구현.
+- **Thread-Safety**: 동기(Sync) 방식의 RAG 로직과 비동기(Async) 방식의 통신 로직 간의 충돌 방지를 위해 `run_coroutine_threadsafe` 패턴 적용.
+- **Design Patterns**: 
+    - **Singleton**: LoreKeeper(지식 베이스) 인스턴스 재사용으로 메모리 최적화.
+    - **Finite State Machine (FSM)**: 게임의 상태(Neutral -> Reboot/Original) 전이 관리.
+
+### 3. Full-Stack Implementation
+- **Responsive Web UI**: Mobile-First 접근 방식으로 설계된 반응형 웹 인터페이스 (CSS Grid/Flexbox).
+- **Deployment**: Docker 컨테이너 개념을 활용한 Render 클라우드 배포 및 환경 변수(`$PORT`)를 통한 동적 바인딩 처리.
+- **Clean Architecture**: UI(Web/Console), Business Logic(GameLoop), Data(LoreKeeper) 계층의 명확한 분리.
 
 ---
+
+## 🧩 핵심 모듈 상세
+
 
 ## 🎮 게임 플레이
 
