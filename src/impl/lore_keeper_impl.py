@@ -65,6 +65,26 @@ class LoreKeeperImpl(LoreKeeper):
                     self.fallback_mode = True
                     raise
 
+    def update_api_key(self, new_api_key: str) -> bool:
+        """BYOK: Update API Key for embeddings"""
+        try:
+            print(f"[INFO] LoreKeeper: Updating API Key for embeddings...")
+            self.api_key = new_api_key
+            # Re-initialize embeddings with new key
+            self.embeddings = GoogleGenerativeAIEmbeddings(
+                model=self.model_name or "models/text-embedding-004",
+                google_api_key=new_api_key
+            )
+            # Update vector store reference if it exists
+            if self.vector_store:
+                self.vector_store._embedding_function = self.embeddings
+                
+            print("[OK] LoreKeeper API Key updated successfully.")
+            return True
+        except Exception as e:
+            print(f"[ERR] Failed to update LoreKeeper API Key: {e}")
+            return False
+
     def load_book(self, file_path: str) -> None:
         """
         Loads the text file and chunks it.

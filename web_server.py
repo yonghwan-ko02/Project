@@ -314,8 +314,14 @@ async def websocket_endpoint(websocket: WebSocket, session_id: str):
                 if not new_key:
                     continue
                 
-                success = await asyncio.to_thread(session.dungeon_master.update_api_key, new_key)
-                if success:
+                # 1. Update DungeonMaster (Generation)
+                dm_success = await asyncio.to_thread(session.dungeon_master.update_api_key, new_key)
+                
+                # 2. Update LoreKeeper (Retrieval/Embeddings)
+                # Note: This updates the global singleton, affecting all users (Trade-off for simplicity)
+                lk_success = await asyncio.to_thread(session.lore_keeper.update_api_key, new_key)
+                
+                if dm_success and lk_success:
                     await websocket.send_json({
                         "type": "system", 
                         "message": "✅ API Key가 성공적으로 업데이트되었습니다! 게임을 계속합니다."
