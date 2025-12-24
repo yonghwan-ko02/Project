@@ -1,7 +1,9 @@
-# 🎭 전래동화 리부트: 콩쥐의 선택
+# 🎭# 🎮 전래동화 리부트: 콩쥐의 선택 (Kongjwi's Reboot)
 
-> **"밑 빠진 독에 물 붓기를 거부한다면?"**  
-> 한국 전래동화 《콩쥐팥쥐》를 기반으로 한 AI 기반 텍스트 어드벤처 게임
+[![Play Now](https://img.shields.io/badge/Play_Game-Render-blue?style=for-the-badge&logo=render)](https://ai-interactive-game.onrender.com/)
+
+> **"항아리에 물을 붓지 마라. 깨어라."**
+> AI와 함께 써내려가는 신개념 인터랙티브 텍스트 어드벤처 게임
 
 [![GitHub Pages](https://img.shields.io/badge/GitHub%20Pages-Live-success)](https://yonghwan-ko02.github.io/Project/)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
