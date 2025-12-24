@@ -84,7 +84,11 @@
 - [ ] **사용자 편의성 (UX)**
     - [x] 로딩 인디케이터 (Spinner) 추가 (Story Generation 중)
     - [x] `help`, `restart`, `save`, `load` 등 메타 커맨드 구현
-    - [ ] 자동 오프닝(프롤로그) 구현 (게임 시작 시 상황 묘사)
+    - [x] 자동 오프닝(프롤로그) 구현 (게임 시작 시 상황 묘사)
+- [x] **고급 AI 기능 (Advanced AI Features)**
+    - [x] 장기 기억(Long-Term Memory) 시스템 (자동 요약)
+    - [x] 하이브리드 모드 지원 (Local Ollama + Cloud Gemini 통합)
+    - [x] 장면 전환 감지 ([SCENE_RESOLVED] 태그)
 - [x] **웹 인터페이스 (Web UI)**
     - [x] FastAPI 백엔드 구축 (`web_server.py`)
     - [x] WebSocket 실시간 통신 구현

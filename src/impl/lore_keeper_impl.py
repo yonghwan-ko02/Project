@@ -4,6 +4,7 @@ import os
 from langchain_community.document_loaders import TextLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
+from langchain_ollama import OllamaEmbeddings
 from langchain_chroma import Chroma
 from src.core.lore_keeper import LoreKeeper
 from dotenv import load_dotenv
@@ -11,7 +12,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 class LoreKeeperImpl(LoreKeeper):
-    def __init__(self, model_name: str = "models/text-embedding-004", max_retries: int = 3):
+    def __init__(self, model_name: str = None, max_retries: int = 3):
+        self.provider = os.getenv("AI_PROVIDER", "google").lower()
         self.model_name = model_name
         self.max_retries = max_retries
         self.documents = []
@@ -20,8 +22,16 @@ class LoreKeeperImpl(LoreKeeper):
         self.fallback_mode = False
         
         self.api_key = os.getenv("GOOGLE_API_KEY")
-        if not self.api_key:
-            print("[WARN] GOOGLE_API_KEY not found. Vector search might fail.")
+        
+        # DB Path strategy: use different folders for different providers
+        if self.provider == "local":
+             self.db_path = "./chroma_db_local"
+             self.model_name = self.model_name or "nomic-embed-text"
+        else:
+             self.db_path = "./chroma_db"
+             self.model_name = self.model_name or "models/text-embedding-004"
+             if not self.api_key:
+                print("[WARN] GOOGLE_API_KEY not found. Vector search might fail.")
 
     def _initialize_embeddings(self):
         """Initialize embeddings with retry logic"""
@@ -30,11 +40,19 @@ class LoreKeeperImpl(LoreKeeper):
         
         for attempt in range(self.max_retries):
             try:
-                self.embeddings = GoogleGenerativeAIEmbeddings(
-                    model=self.model_name,
-                    google_api_key=self.api_key
-                )
-                print(f"[OK] Embeddings initialized successfully ({self.model_name})")
+                if self.provider == "local":
+                    print(f"[INFO] Initializing Local Embeddings ({self.model_name})...")
+                    self.embeddings = OllamaEmbeddings(
+                        model=self.model_name
+                    )
+                else:
+                    print(f"[INFO] Initializing Google Embeddings ({self.model_name})...")
+                    self.embeddings = GoogleGenerativeAIEmbeddings(
+                        model=self.model_name,
+                        google_api_key=self.api_key
+                    )
+                
+                print(f"[OK] Embeddings initialized successfully.")
                 return
             except Exception as e:
                 print(f"[WARN] Attempt {attempt + 1}/{self.max_retries} failed: {e}")
@@ -87,7 +105,7 @@ class LoreKeeperImpl(LoreKeeper):
                 documents=self.documents,
                 embedding=self.embeddings,
                 collection_name="kongjwi_story",
-                persist_directory="./chroma_db" 
+                persist_directory=self.db_path
             )
             print("Index built successfully.")
         except Exception as e:

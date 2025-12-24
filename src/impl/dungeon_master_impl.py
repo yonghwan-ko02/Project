@@ -1,6 +1,7 @@
 import os
 from typing import List, Optional
 from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_ollama import ChatOllama
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.messages import SystemMessage, HumanMessage
 from src.core.dungeon_master import DungeonMaster
@@ -11,22 +12,37 @@ from dotenv import load_dotenv
 load_dotenv()
 
 class DungeonMasterImpl(DungeonMaster):
-    def __init__(self, model_name: str = "gemini-2.5-flash", game_state: Optional[GameState] = None, persona_type: str = "classic"):
-        # gemini-2.5-flash 사용 (현재 유일하게 작동 확인됨 / 일일 20회 제한)
+    def __init__(self, model_name: str = None, game_state: Optional[GameState] = None, persona_type: str = "classic"):
+        self.provider = os.getenv("AI_PROVIDER", "google").lower()
         api_key = os.getenv("GOOGLE_API_KEY")
-        if not api_key:
-            raise ValueError("GOOGLE_API_KEY not found in .env file")
+
+        if self.provider == "local":
+            # Local Ollama Setup
+            model_name = model_name or "llama3.1:8b-instruct-q4_K_M"
+            print(f"[INFO] Initializing DungeonMaster with Local Ollama ({model_name})...")
+            self.llm = ChatOllama(
+                model=model_name,
+                temperature=0.4
+            )
+        else:
+            # Google Gemini Setup (Default)
+            if not api_key:
+                raise ValueError("GOOGLE_API_KEY not found in .env file")
             
-        self.llm = ChatGoogleGenerativeAI(
-            model=model_name, 
-            temperature=0.4,
-            google_api_key=api_key
-        )
+            # Default to stable model if not specified
+            model_name = model_name or "gemini-1.5-flash"
+            print(f"[INFO] Initializing DungeonMaster with Google Gemini ({model_name})...")
+            self.llm = ChatGoogleGenerativeAI(
+                model=model_name, 
+                temperature=0.4,
+                google_api_key=api_key
+            )
+
         self.persona_manager = get_persona_manager()
         self.current_persona = persona_type
         self.system_prompt = self.persona_manager.get_persona(persona_type)
         self.game_state = game_state
-        print(f"[INFO] DungeonMaster initialized with {model_name}")
+        print(f"[INFO] DungeonMaster initialized successfully.")
         
         # Memory Management
         self.conversation_history: List[dict] = []  # Short-term memory (Exact turns)
