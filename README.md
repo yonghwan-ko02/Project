@@ -14,6 +14,7 @@
 
 ### 🌐 지금 바로 플레이하세요! (Cloud)
 **[👉 게임 실행하기 (https://ai-interactive-game.onrender.com)](https://ai-interactive-game.onrender.com/)**
+> **🏠 Local**: `http://localhost:8006` (직접 실행 시)
 
 ---
 
@@ -59,7 +60,7 @@ pip install -r requirements.txt
 python web_server.py
 ```
 
-브라우저에서 `http://localhost:8001`에 접속하여 플레이하세요.
+브라우저에서 `http://localhost:8006`에 접속하여 플레이하세요.
 
 ---
 
