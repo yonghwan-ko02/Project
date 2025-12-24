@@ -342,9 +342,23 @@ async def websocket_endpoint(websocket: WebSocket, session_id: str):
                             "message": "🤔 AI가 다시 생각하는 중..."
                         })
                         
-                        # Process the failed input again
-                        response = await session.process_input(retry_input)
-                        await websocket.send_json(response)
+                        try:
+                            # Process the failed input again with Timeout (30s)
+                            # to prevent indefinite hanging
+                            response = await asyncio.wait_for(session.process_input(retry_input), timeout=30.0)
+                            await websocket.send_json(response)
+                        except asyncio.TimeoutError:
+                            print(f"[ERR] Auto-retry timed out for input: {retry_input}")
+                            await websocket.send_json({
+                                "type": "error",
+                                "message": "❌ 응답 시간이 초과되었습니다. 다시 시도해주세요."
+                            })
+                        except Exception as e:
+                            print(f"[ERR] Auto-retry failed: {e}")
+                            await websocket.send_json({
+                                "type": "error",
+                                "message": f"❌ 오류 발생: {str(e)}"
+                            })
                         
                 else:
                     await websocket.send_json({

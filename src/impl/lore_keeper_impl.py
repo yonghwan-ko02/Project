@@ -75,9 +75,17 @@ class LoreKeeperImpl(LoreKeeper):
                 model=self.model_name or "models/text-embedding-004",
                 google_api_key=new_api_key
             )
-            # Update vector store reference if it exists
-            if self.vector_store:
-                self.vector_store._embedding_function = self.embeddings
+            
+            # Re-create vector store with new embeddings if it exists
+            # (Safest way to ensure the new key is used)
+            if self.documents and self.db_path:
+                 print("[INFO] LoreKeeper: Re-initializing Vector Store...")
+                 self.vector_store = Chroma.from_documents(
+                    documents=self.documents,
+                    embedding=self.embeddings,
+                    collection_name="kongjwi_story",
+                    persist_directory=self.db_path
+                )
                 
             print("[OK] LoreKeeper API Key updated successfully.")
             return True
