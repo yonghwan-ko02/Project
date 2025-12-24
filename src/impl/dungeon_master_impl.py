@@ -30,7 +30,7 @@ class DungeonMasterImpl(DungeonMaster):
                 raise ValueError("GOOGLE_API_KEY not found in .env file")
             
             # Default to stable model if not specified
-            model_name = model_name or "gemini-1.5-flash-001"
+            model_name = model_name or "gemini-2.0-flash"
             print(f"[INFO] Initializing DungeonMaster with Google Gemini ({model_name})...")
             self.llm = ChatGoogleGenerativeAI(
                 model=model_name, 
@@ -66,7 +66,7 @@ class DungeonMasterImpl(DungeonMaster):
             print(f"[INFO] Updating API Key to user provided key...")
             # Re-initialize Google Gemini with new key
             self.llm = ChatGoogleGenerativeAI(
-                model="gemini-1.5-flash-001", # or whatever target model
+                model="gemini-2.0-flash", # or whatever target model
                 temperature=0.4,
                 google_api_key=new_api_key
             )
