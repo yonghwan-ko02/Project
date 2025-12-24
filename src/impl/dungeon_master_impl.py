@@ -182,8 +182,15 @@ class DungeonMasterImpl(DungeonMaster):
 답변은 한국어로 하고, 생동감 있게 서술하세요.""")
         ]
         
-        response = self.llm.invoke(messages)
-        content = response.content
+        print(f"[DEBUG] Invoking LLM with model: {self.llm.model}")
+        try:
+            response = self.llm.invoke(messages)
+            print(f"[DEBUG] LLM Response received. Content length: {len(response.content)}")
+            content = response.content
+        except Exception as e:
+            print(f"[ERR] LLM Invoke Failed: {e}")
+            # Re-raise explicitely for web_server.py to catch (e.g. 429 Quota Error)
+            raise e
         
         # Check for Scene Resolution Tag
         if "[SCENE_RESOLVED]" in content:
