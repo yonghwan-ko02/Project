@@ -114,6 +114,15 @@ class GameSession:
                 "turn": self.turn_count
             }
         except Exception as e:
+            # Check for Google API Quota Error
+            error_msg = str(e)
+            if "429" in error_msg or "ResourceExhausted" in error_msg:
+                print(f"[WARN] Quota Exceeded detected: {e}")
+                return {
+                    "type": "request_api_key",
+                    "message": "⚠️ 무료 사용량이 초과되었습니다. 계속하려면 API Key를 입력해주세요."
+                }
+            
             return {
                 "type": "error",
                 "message": f"오류 발생: {str(e)}"
@@ -299,6 +308,25 @@ async def websocket_endpoint(websocket: WebSocket, session_id: str):
             # 사용자 메시지 에코 및 생각 중 표시는 클라이언트에서 즉시 처리함 (Optimistic UI)
             # 따라서 서버에서는 바로 처리 로직으로 진입
             
+            # API Key 처리 (BYOK)
+            if data.get("type") == "api_key":
+                new_key = data.get("key")
+                if not new_key:
+                    continue
+                
+                success = await asyncio.to_thread(session.dungeon_master.update_api_key, new_key)
+                if success:
+                    await websocket.send_json({
+                        "type": "system", 
+                        "message": "✅ API Key가 성공적으로 업데이트되었습니다! 게임을 계속합니다."
+                    })
+                else:
+                    await websocket.send_json({
+                        "type": "error", 
+                        "message": "❌ 유효하지 않은 API Key입니다."
+                    })
+                continue
+
             # 입력 처리
             response = await session.process_input(user_input)
             

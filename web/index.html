@@ -396,6 +396,38 @@
                 transform: scale(1);
             }
         }
+
+        /* Modal Styling */
+        .modal {
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            background-color: #1a1a2e;
+            padding: 30px;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #fff;
+            text-align: center;
+        }
+
+        .modal h2 {
+            color: #ff6b6b;
+            margin-top: 0;
+        }
     </style>
     <style>
         /* Mobile Responsive Design */
@@ -488,6 +520,29 @@
 
 <body>
     <div class="container">
+        <!-- API Key Request Modal -->
+        <div id="apiKeyModal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <h2>⚠️ 무료 사용량 초과</h2>
+                <p>Google Gemini 무료 제공량이 소진되었습니다.<br>계속하려면 본인의 <strong>API Key</strong>를 입력해주세요.</p>
+                <div class="input-wrapper" style="margin-top: 20px;">
+                    <input type="password" id="apiKeyInput" placeholder="Google Gemini API Key 입력..."
+                        style="width: 100%;">
+                </div>
+                <p style="font-size: 12px; color: #aaa; margin-top: 10px;">
+                    * 키는 저장되지 않으며, 이번 세션에만 사용됩니다.<br>
+                    * <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color: #4facfe;">여기서 무료로
+                        발급받으세요</a>
+                </p>
+                <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+                    <button id="submitApiKeyBtn"
+                        style="background: linear-gradient(45deg, #4facfe 0%, #00f2fe 100%); width: auto;">전송</button>
+                    <button onclick="document.getElementById('apiKeyModal').style.display='none'"
+                        style="background: #333; width: auto;">닫기</button>
+                </div>
+            </div>
+        </div>
+
         <div class="header">
             <h1>🎭 전래동화 리부트: 콩쥐의 선택</h1>
             <p>AI 기반 인터랙티브 스토리텔링</p>
@@ -616,6 +671,13 @@
             } else if (data.type === 'log') {
                 addLog(data.message);
                 return; // 로그는 채팅창에 영향을 주지 않음
+            } else if (data.type === 'request_api_key') {
+                // BYOK: API Key 요청 모달 표시
+                removeTypingIndicator();
+                addMessage('system', data.message);
+                document.getElementById('apiKeyModal').style.display = 'flex';
+                document.getElementById('apiKeyInput').focus();
+                return;
             } else {
                 // 생각 중 메시지 제거
                 removeTypingIndicator();
@@ -715,6 +777,26 @@
             logContent.appendChild(entry);
             logContent.scrollTop = logContent.scrollHeight;
         }
+
+        // API Key Submit Logic
+        document.getElementById('submitApiKeyBtn').onclick = () => {
+            const keyInput = document.getElementById('apiKeyInput');
+            const key = keyInput.value.trim();
+            if (!key) {
+                alert("API Key를 입력해주세요.");
+                return;
+            }
+
+            if (ws) {
+                ws.send(JSON.stringify({ type: "api_key", key: key }));
+                document.getElementById('apiKeyModal').style.display = 'none';
+                keyInput.value = ""; // Clear for security
+                addMessage('system', "🔑 API Key를 서버로 전송했습니다...");
+                addTypingIndicator(); // Show loading again
+            } else {
+                alert("서버와 연결되어 있지 않습니다.");
+            }
+        };
     </script>
 </body>
 

@@ -60,6 +60,24 @@ class DungeonMasterImpl(DungeonMaster):
             except:
                 pass
 
+    def update_api_key(self, new_api_key: str) -> bool:
+        """BYOK: 사용자 제공 API 키로 LLM 재설정"""
+        try:
+            print(f"[INFO] Updating API Key to user provided key...")
+            # Re-initialize Google Gemini with new key
+            self.llm = ChatGoogleGenerativeAI(
+                model="gemini-1.5-flash", # or whatever target model
+                temperature=0.4,
+                google_api_key=new_api_key
+            )
+            # Provider forced to google (since they provided a key)
+            self.provider = "google"
+            self.log("✅ API Key updated successfully. Switched to Google Gemini.")
+            return True
+        except Exception as e:
+            self.log(f"❌ Failed to update API Key: {e}")
+            return False
+
     def set_system_prompt(self, prompt: str) -> None:
         """시스템 프롬프트를 직접 설정 (커스텀 프롬프트용)"""
         self.system_prompt = prompt
