@@ -11,8 +11,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 class DungeonMasterImpl(DungeonMaster):
-    def __init__(self, model_name: str = "gemini-flash-latest", game_state: Optional[GameState] = None, persona_type: str = "classic"):
-        # gemini-flash-latest 사용 (사용 가능한 모델 리스트 확인 완료)
+    def __init__(self, model_name: str = "gemini-2.0-flash-lite-preview-02-05", game_state: Optional[GameState] = None, persona_type: str = "classic"):
+        # gemini-2.0-flash-lite-preview-02-05 사용 (높은 할당량 예상)
         api_key = os.getenv("GOOGLE_API_KEY")
         if not api_key:
             raise ValueError("GOOGLE_API_KEY not found in .env file")

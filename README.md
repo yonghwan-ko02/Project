@@ -8,7 +8,7 @@
 [![GitHub Pages](https://img.shields.io/badge/GitHub%20Pages-Live-success)](https://yonghwan-ko02.github.io/Project/)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://www.python.org/)
-[![Gemini](https://img.shields.io/badge/Google-Gemini_Flash_Latest-4285F4.svg)](https://deepmind.google/technologies/gemini/)
+[![Gemini](https://img.shields.io/badge/Google-Gemini_2.0_Flash_Lite-4285F4.svg)](https://deepmind.google/technologies/gemini/)
 
 ---
 
@@ -99,7 +99,7 @@ Project/
 | 구분 | 기술 | 설명 |
 |------|------|------|
 | **언어** | Python 3.10+ | AI/ML 생태계 최적화 |
-| **LLM** | Google Gemini (Flash Latest) | 빠르고 정확한 클라우드 AI 모델 (Free Tier) |
+| **LLM** | Google Gemini (2.0 Flash Lite) | 빠르고 정확한 클라우드 AI 모델 (Free Tier/High Quota) |
 | **RAG** | LangChain | AI 워크플로우 구축 프레임워크 |
 | **Vector DB** | ChromaDB | 서버리스 임베딩 데이터베이스 |
 | **Web** | FastAPI + HTML/JS | 반응형 웹 인터페이스 |
