@@ -72,7 +72,7 @@ class DungeonMasterImpl(DungeonMaster):
         try:
             print(f"[INFO] Updating API Key to user provided key...")
             # Re-initialize Google Gemini with new key
-            self.llm = ChatGoogleGenerativeAI(
+            new_llm = ChatGoogleGenerativeAI(
                 model="gemini-2.0-flash", 
                 temperature=0.7,
                 google_api_key=new_api_key,
@@ -83,13 +83,20 @@ class DungeonMasterImpl(DungeonMaster):
                     HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_NONE,
                 }
             )
+            
+            # Validation: Try a simple request to verify key workability
+            print("[INFO] Verifying new API Key with a hello world request...")
+            new_llm.invoke([HumanMessage(content="Hello")])
+            print("[OK] New API Key is valid and working.")
+            
+            self.llm = new_llm
             # Provider forced to google (since they provided a key)
             self.provider = "google"
-            self.log("✅ API Key updated successfully. Switched to Google Gemini.")
+            self.log(f"✅ API Key updated successfully (Key ID: ...{new_api_key[-4:]}).")
             return True, "Success"
         except Exception as e:
-            self.log(f"❌ Failed to update API Key: {e}")
-            return False, str(e)
+            self.log(f"❌ Failed to verify new API Key: {e}")
+            return False, f"Verification Failed: {e}"
 
     def set_system_prompt(self, prompt: str) -> None:
         """시스템 프롬프트를 직접 설정 (커스텀 프롬프트용)"""

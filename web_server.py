@@ -311,13 +311,29 @@ async def websocket_endpoint(websocket: WebSocket, session_id: str):
                 if not new_key:
                     continue
                 
-                # 1. Update DungeonMaster (Generation)
-                dm_result = await asyncio.to_thread(session.dungeon_master.update_api_key, new_key)
-                dm_success, dm_msg = dm_result if isinstance(dm_result, tuple) else (dm_result, "Unknown")
+                # 1. Update DungeonMaster (Generation) with Timeout (10s)
+                print("[INFO] Updating DungeonMaster Key...")
+                try:
+                    dm_result = await asyncio.wait_for(
+                        asyncio.to_thread(session.dungeon_master.update_api_key, new_key), 
+                        timeout=15.0
+                    )
+                    dm_success, dm_msg = dm_result if isinstance(dm_result, tuple) else (dm_result, "Unknown")
+                except asyncio.TimeoutError:
+                    print("[ERR] DungeonMaster Key Update Timed Out")
+                    dm_success, dm_msg = False, "Validation Timeout (Local)"
                 
-                # 2. Update LoreKeeper (Retrieval/Embeddings)
-                lk_result = await asyncio.to_thread(session.lore_keeper.update_api_key, new_key)
-                lk_success, lk_msg = lk_result if isinstance(lk_result, tuple) else (lk_result, "Unknown")
+                # 2. Update LoreKeeper (Retrieval/Embeddings) with Timeout (5s)
+                print("[INFO] Updating LoreKeeper Key...")
+                try:
+                    lk_result = await asyncio.wait_for(
+                        asyncio.to_thread(session.lore_keeper.update_api_key, new_key),
+                        timeout=10.0
+                    )
+                    lk_success, lk_msg = lk_result if isinstance(lk_result, tuple) else (lk_result, "Unknown")
+                except asyncio.TimeoutError:
+                     print("[ERR] LoreKeeper Key Update Timed Out")
+                     lk_success, lk_msg = False, "DB Update Timeout"
                 
                 if dm_success and lk_success:
                     await websocket.send_json({
