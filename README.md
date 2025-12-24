@@ -163,14 +163,40 @@ Project/
 - [x] 프로젝트 기획 및 문서화
 - [x] GitHub 저장소 설정
 - [x] GitHub Pages 자동 배포 설정
-- [ ] 데이터 준비 (story.txt)
-- [ ] LoreKeeper 구현 (RAG)
-- [ ] DungeonMaster 구현 (AI 엔진)
-- [ ] GameLoop 구현 (UI/UX)
-- [ ] 테스트 및 버그 수정
+- [x] 데이터 준비 (story.txt - 120줄, 8개 챕터)
+- [x] LoreKeeper 구현 (RAG with retry logic & fallback)
+- [x] DungeonMaster 구현 (AI 엔진 with GameState integration)
+- [x] GameState 구현 (선택 추적 및 분기 로직)
+- [x] GameLoop 구현 (UI/UX with meta commands)
+- [x] Logger 구현 (세션 기록)
+- [x] 테스트 및 버그 수정 (20/20 tests passing)
+- [ ] 실제 Ollama 통합 테스트
 - [ ] 최종 배포
 
-현재 진행 상황은 [Task.md](docs/Task.md)에서 확인하세요.
+**현재 진행 상황**: Phase 6 완료, 통합 테스트 대기 중
+
+자세한 작업 내역은 [Walkthrough](file:///C:/Users/WIN/.gemini/antigravity/brain/8ccb637d-b225-40c7-bc91-563f33b9db26/walkthrough.md)를 참고하세요.
+
+---
+
+## 🆕 새로운 기능
+
+### GameState 시스템
+- 플레이어 선택 자동 추적
+- 리부트 점수 계산 (0-100)
+- 3가지 엔딩 타입 (ORIGINAL/REBOOT/NEUTRAL)
+
+### 메타 명령어
+- `help`: 도움말 표시
+- `status`: 현재 게임 상태 확인
+- `restart`: 게임 재시작
+- `quit`: 게임 종료
+
+### 고급 기능
+- **에러 처리**: Ollama 연결 실패 시 재시도 (exponential backoff)
+- **Fallback 모드**: Vector DB 실패 시 키워드 검색
+- **세션 로깅**: JSONL 형식으로 게임 기록 저장
+- **Rich UI**: 컬러풀한 터미널 출력 및 로딩 스피너
 
 ---
 

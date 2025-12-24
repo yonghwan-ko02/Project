@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>전래동화 리부트: 콩쥐의 선택</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: 90vh;
+            max-height: 800px;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 8px;
+            font-weight: 700;
+        }
+
+        .header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .persona-selector {
+            padding: 30px;
+            background: #f8f9fa;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .persona-selector h2 {
+            font-size: 20px;
+            margin-bottom: 20px;
+            color: #495057;
+        }
+
+        .persona-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+        }
+
+        .persona-btn {
+            padding: 15px;
+            border: 2px solid #dee2e6;
+            border-radius: 12px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .persona-btn:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+        }
+
+        .persona-btn.selected {
+            border-color: #667eea;
+            background: #667eea;
+            color: white;
+        }
+
+        .persona-btn .icon {
+            font-size: 32px;
+            margin-bottom: 8px;
+        }
+
+        .persona-btn .name {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .persona-btn .desc {
+            font-size: 11px;
+            opacity: 0.7;
+        }
+
+        .start-btn {
+            margin-top: 20px;
+            padding: 15px 40px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+
+        .start-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .start-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .chat-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 30px;
+            background: #f8f9fa;
+            display: none;
+        }
+
+        .chat-container.active {
+            display: block;
+        }
+
+        .message {
+            margin-bottom: 20px;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message.user {
+            text-align: right;
+        }
+
+        .message-content {
+            display: inline-block;
+            max-width: 70%;
+            padding: 15px 20px;
+            border-radius: 18px;
+            word-wrap: break-word;
+            white-space: pre-wrap;
+        }
+
+        .message.user .message-content {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .message.ai .message-content {
+            background: white;
+            color: #333;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .message.system .message-content {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+
+        .message.error .message-content {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .message.thinking .message-content {
+            background: #e7f3ff;
+            color: #004085;
+            font-style: italic;
+        }
+
+        .input-container {
+            padding: 20px 30px;
+            background: white;
+            border-top: 2px solid #e9ecef;
+            display: none;
+        }
+
+        .input-container.active {
+            display: block;
+        }
+
+        .input-wrapper {
+            display: flex;
+            gap: 10px;
+        }
+
+        .input-wrapper input {
+            flex: 1;
+            padding: 15px 20px;
+            border: 2px solid #dee2e6;
+            border-radius: 25px;
+            font-size: 15px;
+            outline: none;
+            transition: border-color 0.3s ease;
+        }
+
+        .input-wrapper input:focus {
+            border-color: #667eea;
+        }
+
+        .input-wrapper button {
+            padding: 15px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .input-wrapper button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+
+        .input-wrapper button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            color: #6c757d;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎭 전래동화 리부트: 콩쥐의 선택</h1>
+            <p>AI 기반 인터랙티브 스토리텔링</p>
+        </div>
+
+        <!-- 페르소나 선택 화면 -->
+        <div class="persona-selector" id="personaSelector">
+            <h2>스토리텔링 스타일을 선택하세요</h2>
+            <div class="persona-grid" id="personaGrid">
+                <!-- JavaScript로 동적 생성 -->
+            </div>
+            <button class="start-btn" id="startBtn" disabled>게임 시작</button>
+        </div>
+
+        <!-- 로딩 화면 -->
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>게임을 초기화하는 중...</p>
+        </div>
+
+        <!-- 채팅 화면 -->
+        <div class="chat-container" id="chatContainer">
+            <!-- 메시지가 여기에 추가됩니다 -->
+        </div>
+
+        <!-- 입력 영역 -->
+        <div class="input-container" id="inputContainer">
+            <div class="input-wrapper">
+                <input type="text" id="userInput" placeholder="행동을 입력하세요... (예: 밑 빠진 독에 물 붓기를 거부한다)" />
+                <button id="sendBtn">전송</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const personas = {
+            classic: { icon: '📖', name: '클래식', desc: '따뜻하고 교육적인 전통 스타일' },
+            dialect: { icon: '🗣️', name: '사투리', desc: '경상도 방언으로 생동감' },
+            cynical: { icon: '🌑', name: '냉소적', desc: '어둡고 풍자적인 해석' },
+            modern: { icon: '💻', name: '현대적', desc: '현대 언어와 문화 참조' },
+            poetic: { icon: '✨', name: '시적', desc: '서정적이고 문학적 표현' }
+        };
+
+        let selectedPersona = null;
+        let ws = null;
+        let sessionId = Math.random().toString(36).substring(7);
+
+        // 페르소나 버튼 생성
+        const personaGrid = document.getElementById('personaGrid');
+        Object.entries(personas).forEach(([id, data]) => {
+            const btn = document.createElement('div');
+            btn.className = 'persona-btn';
+            btn.innerHTML = `
+                <div class="icon">${data.icon}</div>
+                <div class="name">${data.name}</div>
+                <div class="desc">${data.desc}</div>
+            `;
+            btn.onclick = () => selectPersona(id, btn);
+            personaGrid.appendChild(btn);
+        });
+
+        function selectPersona(id, element) {
+            selectedPersona = id;
+            document.querySelectorAll('.persona-btn').forEach(btn => btn.classList.remove('selected'));
+            element.classList.add('selected');
+            document.getElementById('startBtn').disabled = false;
+        }
+
+        // 게임 시작
+        document.getElementById('startBtn').onclick = async () => {
+            if (!selectedPersona) return;
+
+            document.getElementById('personaSelector').style.display = 'none';
+            document.getElementById('loading').classList.add('active');
+
+            // WebSocket 연결
+            ws = new WebSocket(`ws://localhost:8000/ws/${sessionId}`);
+
+            ws.onopen = () => {
+                // 페르소나 전송
+                ws.send(JSON.stringify({ persona: selectedPersona }));
+            };
+
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                handleMessage(data);
+            };
+
+            ws.onerror = (error) => {
+                console.error('WebSocket error:', error);
+                addMessage('error', '서버 연결 오류가 발생했습니다.');
+            };
+
+            ws.onclose = () => {
+                addMessage('system', '연결이 종료되었습니다.');
+            };
+        };
+
+        function handleMessage(data) {
+            // 로딩 화면 숨기기
+            document.getElementById('loading').classList.remove('active');
+            document.getElementById('chatContainer').classList.add('active');
+            document.getElementById('inputContainer').classList.add('active');
+
+            if (data.type === 'thinking') {
+                // 생각 중 메시지는 임시로 표시
+                addMessage('thinking', data.message, true);
+            } else {
+                // 생각 중 메시지 제거
+                const thinkingMsg = document.querySelector('.message.thinking');
+                if (thinkingMsg) thinkingMsg.remove();
+
+                // 실제 메시지 추가
+                addMessage(data.type, data.message);
+            }
+
+            // 입력 활성화
+            document.getElementById('sendBtn').disabled = false;
+            document.getElementById('userInput').disabled = false;
+        }
+
+        function addMessage(type, content, temporary = false) {
+            const chatContainer = document.getElementById('chatContainer');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}`;
+            if (temporary) messageDiv.classList.add('temporary');
+
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'message-content';
+            contentDiv.textContent = content;
+
+            messageDiv.appendChild(contentDiv);
+            chatContainer.appendChild(messageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        // 메시지 전송
+        function sendMessage() {
+            const input = document.getElementById('userInput');
+            const message = input.value.trim();
+
+            if (!message || !ws) return;
+
+            // 입력 비활성화
+            document.getElementById('sendBtn').disabled = true;
+            input.disabled = true;
+
+            // WebSocket으로 전송
+            ws.send(JSON.stringify({ message: message }));
+
+            // 입력 필드 초기화
+            input.value = '';
+        }
+
+        document.getElementById('sendBtn').onclick = sendMessage;
+        document.getElementById('userInput').onkeypress = (e) => {
+            if (e.key === 'Enter') sendMessage();
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,13 @@
+langchain
+langchain-community
+langchain-ollama
+chromadb
+rich
+pytest
+black
+flake8
+langchain-chroma
+fastapi
+uvicorn[standard]
+python-dotenv
+websockets

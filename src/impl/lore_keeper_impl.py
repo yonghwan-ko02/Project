@@ -1,0 +1,126 @@
+from typing import List
+import time
+from langchain_community.document_loaders import TextLoader
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain_ollama import OllamaEmbeddings
+from langchain_chroma import Chroma
+from src.core.lore_keeper import LoreKeeper
+
+class LoreKeeperImpl(LoreKeeper):
+    def __init__(self, model_name: str = "nomic-embed-text:latest", max_retries: int = 3):
+        self.model_name = model_name
+        self.max_retries = max_retries
+        self.documents = []
+        self.vector_store = None
+        self.embeddings = None
+        self.fallback_mode = False
+
+    def _initialize_embeddings(self):
+        """Initialize embeddings with retry logic"""
+        if self.embeddings is not None:
+            return
+        
+        for attempt in range(self.max_retries):
+            try:
+                self.embeddings = OllamaEmbeddings(model=self.model_name)
+                print(f"✅ Embeddings initialized successfully")
+                return
+            except Exception as e:
+                print(f"⚠️ Attempt {attempt + 1}/{self.max_retries} failed: {e}")
+                if attempt < self.max_retries - 1:
+                    wait_time = 2 ** attempt  # Exponential backoff
+                    print(f"Retrying in {wait_time} seconds...")
+                    time.sleep(wait_time)
+                else:
+                    print("❌ Failed to initialize embeddings. Entering fallback mode.")
+                    self.fallback_mode = True
+                    raise
+
+    def load_book(self, file_path: str) -> None:
+        """
+        Loads the text file and chunks it.
+        """
+        if not file_path:
+            raise ValueError("File path cannot be empty")
+            
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                text = f.read()
+        except FileNotFoundError:
+            raise FileNotFoundError(f"Story file not found: {file_path}")
+        except Exception as e:
+            raise Exception(f"Error reading file: {e}")
+            
+        text_splitter = RecursiveCharacterTextSplitter(
+            chunk_size=1000,
+            chunk_overlap=200,
+            length_function=len,
+        )
+        self.documents = text_splitter.create_documents([text])
+        print(f"Loaded {len(self.documents)} chunks from {file_path}")
+
+    def build_index(self) -> None:
+        """
+        Builds the ChromaDB index with error handling.
+        """
+        if not self.documents:
+            print("No documents to index. Call load_book() first.")
+            return
+
+        try:
+            # Initialize embeddings if not already done
+            self._initialize_embeddings()
+            
+            # Persist directory could be made configurable
+            self.vector_store = Chroma.from_documents(
+                documents=self.documents,
+                embedding=self.embeddings,
+                collection_name="kongjwi_story",
+                persist_directory="./chroma_db" 
+            )
+            print("Index built successfully.")
+        except Exception as e:
+            print(f"❌ Failed to build index: {e}")
+            print("⚠️ Entering fallback mode (in-memory search only)")
+            self.fallback_mode = True
+
+    def retrieve(self, query: str, top_k: int = 3) -> List[str]:
+        """
+        Retrieves relevant contexts with fallback to simple text search.
+        """
+        if self.fallback_mode or not self.vector_store:
+            # Fallback: simple keyword search in documents
+            print("⚠️ Using fallback search (no vector DB)")
+            return self._fallback_search(query, top_k)
+        
+        try:
+            results = self.vector_store.similarity_search(query, k=top_k)
+            return [doc.page_content for doc in results]
+        except Exception as e:
+            print(f"⚠️ Vector search failed: {e}, using fallback")
+            return self._fallback_search(query, top_k)
+    
+    def _fallback_search(self, query: str, top_k: int = 3) -> List[str]:
+        """
+        Simple keyword-based search as fallback when vector DB is unavailable.
+        """
+        if not self.documents:
+            return ["콩쥐팥쥐 이야기를 참고하세요."]
+        
+        # Simple keyword matching
+        query_lower = query.lower()
+        scored_docs = []
+        
+        for doc in self.documents:
+            content_lower = doc.page_content.lower()
+            # Count keyword matches
+            score = sum(1 for word in query_lower.split() if word in content_lower)
+            if score > 0:
+                scored_docs.append((score, doc.page_content))
+        
+        # Sort by score and return top_k
+        scored_docs.sort(reverse=True, key=lambda x: x[0])
+        results = [content for _, content in scored_docs[:top_k]]
+        
+        return results if results else [self.documents[0].page_content]
+
