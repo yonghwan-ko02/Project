@@ -8,7 +8,7 @@
 [![GitHub Pages](https://img.shields.io/badge/GitHub%20Pages-Live-success)](https://yonghwan-ko02.github.io/Project/)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://www.python.org/)
-[![Ollama](https://img.shields.io/badge/Ollama-Llama3.1-orange.svg)](https://ollama.com/)
+[![Gemini](https://img.shields.io/badge/Google-Gemini_2.5_Flash-4285F4.svg)](https://deepmind.google/technologies/gemini/)
 
 ---
 
@@ -24,8 +24,9 @@
 
 ### ✨ 특징
 
-- 🏠 **100% 로컬 실행**: 인터넷 연결 없이 개인 노트북에서 완벽하게 구동
-- 💰 **비용 0원**: 서버 비용이나 API 사용료 없이 오픈소스 모델 사용
+- ☁️ **클라우드 실행**: Google Gemini API를 사용하여 저사양 기기에서도 쾌적하게 플레이
+- 🏠 **로컬 모드 지원**: Ollama를 사용하여 인터넷 없이 내 컴퓨터의 성능으로도 실행 가능
+- 💰 **비용 0원**: Google의 무료 티어(Free Tier)를 사용하여 비용 부담 없음
 - 🎮 **무한한 가능성**: 당신의 선택에 따라 매번 다른 결말
 - 🧠 **RAG 기술**: 원작 지식을 활용한 일관성 있는 스토리텔링
 
@@ -36,8 +37,8 @@
 ### 사전 요구사항
 
 - **Python 3.10 이상**
-- **Ollama** ([설치 가이드](https://ollama.com/))
-- **8GB 이상 RAM** (권장: 16GB)
+- **Google Gemini API Key** ([발급받기](https://aistudio.google.com/app/apikey))
+- (선택) 로컬 모드 사용 시: **Ollama**
 
 ### 설치 및 실행
 
@@ -53,13 +54,15 @@ source .venv/bin/activate  # Windows: .venv\Scripts\activate
 # 3. 의존성 설치
 pip install -r requirements.txt
 
-# 4. Ollama 모델 다운로드
-ollama pull llama3.1
-ollama pull nomic-embed-text
+# 4. 환경 변수 설정 (.env 파일 생성)
+# .env 파일을 만들고 아래 내용을 추가하세요:
+# GOOGLE_API_KEY=your_api_key_here
 
 # 5. 게임 실행
-python main.py
+python web_server.py
 ```
+
+브라우저에서 `http://localhost:8001`에 접속하여 플레이하세요.
 
 ---
 
@@ -96,10 +99,10 @@ Project/
 | 구분 | 기술 | 설명 |
 |------|------|------|
 | **언어** | Python 3.10+ | AI/ML 생태계 최적화 |
-| **LLM** | Ollama (Llama 3.1 8B) | 로컬 실행 가능한 경량 모델 |
+| **LLM** | Google Gemini (2.5 Flash) | 빠르고 정확한 클라우드 AI 모델 |
 | **RAG** | LangChain | AI 워크플로우 구축 프레임워크 |
 | **Vector DB** | ChromaDB | 서버리스 임베딩 데이터베이스 |
-| **UI** | Rich | 터미널 스타일링 라이브러리 |
+| **Web** | FastAPI + HTML/JS | 반응형 웹 인터페이스 |
 
 자세한 내용은 [TechStack.md](docs/TechStack.md)를 참고하세요.
 
