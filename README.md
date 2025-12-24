@@ -72,29 +72,49 @@ python web_server.py
 ### 📐 데이터 흐름도 (Data Flow)
 
 ```mermaid
-graph TD
-    User([User]) <-->|WebSocket| Frontend(Web Client)
-    Frontend <-->|Async/Await| Backend[FastAPI Server]
+graph LR
+    %% Styles
+    classDef user fill:#FF9F43,stroke:#333,stroke-width:2px,color:white;
+    classDef frontend fill:#54a0ff,stroke:#333,stroke-width:2px,color:white;
+    classDef backend fill:#5f27cd,stroke:#333,stroke-width:2px,color:white;
+    classDef ai fill:#1dd1a1,stroke:#333,stroke-width:2px,color:white;
+    classDef storage fill:#8395a7,stroke:#333,stroke-width:2px,color:white;
+
+    %% Nodes
+    Player([🙋‍♂️ User])
+    WebUI[📱 Web Frontend]
+    Server[🚀 FastAPI Server]
     
-    subgraph "Core Logic (Domain Layer)"
-        Backend -->|Manage| Session(GameSession)
-        Session -->|Execute| DM[DungeonMaster AI]
-        Session -->|State Tracking| State[GameState]
+    subgraph "Core Logic"
+        Session(GameSession)
+        DM[🧠 DungeonMaster]
+        State[📊 GameState]
     end
     
-    subgraph "AI & Data Layer"
-        DM -->|RAG Retrieval| LK[LoreKeeper]
-        LK <-->|Similarity Search| VectorDB[(ChromaDB)]
-        DM <-->|Text Generation| LLM((Ollama / Gemini))
+    subgraph "Data & AI"
+        LK[📚 LoreKeeper]
+        VectorDB[(💾 ChromaDB)]
+        LLM((🤖 LLM Engine))
     end
+
+    %% Connections
+    Player <==>|WebSocket| WebUI
+    WebUI <==>|Async JSON| Server
     
-    classDef client fill:#f9f,stroke:#333,stroke-width:2px;
-    classDef server fill:#bbf,stroke:#333,stroke-width:2px;
-    classDef ai fill:#bfb,stroke:#333,stroke-width:2px;
+    Server -->|Manage| Session
+    Session -->|Control| DM
+    Session -->|Track| State
     
-    class User,Frontend client;
-    class Backend,Session,State server;
-    class DM,LK,VectorDB,LLM ai;
+    DM <-->|Generate| LLM
+    DM -->|Query| LK
+    LK <-->|Retrieve| VectorDB
+    
+    %% Apply Styles
+    class Player user;
+    class WebUI frontend;
+    class Server,Session,DM,State backend;
+    class LLM,LK ai;
+    class VectorDB storage;
 ```
 
 ---
