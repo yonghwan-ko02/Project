@@ -308,6 +308,74 @@
             animation: bounce 1.4s infinite ease-in-out both;
         }
 
+        /* Log Panel */
+        .log-panel {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 400px;
+            height: 300px;
+            background: #2d3436;
+            color: #00ff00;
+            font-family: 'Consolas', monospace;
+            font-size: 12px;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+            z-index: 1000;
+        }
+
+        .log-panel.active {
+            display: flex;
+        }
+
+        .log-header {
+            padding: 10px;
+            background: #1e272e;
+            border-bottom: 1px solid #636e72;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .log-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+        }
+
+        .log-entry {
+            margin-bottom: 5px;
+            border-bottom: 1px solid #353b48;
+            padding-bottom: 2px;
+        }
+
+        .log-toggle-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: #2d3436;
+            color: white;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            z-index: 1001;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .log-toggle-btn:hover {
+            transform: scale(1.1);
+        }
+
+
         .typing-indicator span:nth-child(1) {
             animation-delay: -0.32s;
         }
@@ -336,6 +404,19 @@
         <div class="header">
             <h1>🎭 전래동화 리부트: 콩쥐의 선택</h1>
             <p>AI 기반 인터랙티브 스토리텔링</p>
+        </div>
+
+        <button class="log-toggle-btn" id="logToggleBtn" title="개발자 로그 보기">🛠️</button>
+
+        <div class="log-panel" id="logPanel">
+            <div class="log-header">
+                <span>Server Logs</span>
+                <button onclick="document.getElementById('logPanel').classList.remove('active')"
+                    style="background:none;border:none;color:white;cursor:pointer;">✕</button>
+            </div>
+            <div class="log-content" id="logContent">
+                <!-- Logs will appear here -->
+            </div>
         </div>
 
         <!-- 페르소나 선택 화면 -->
@@ -373,7 +454,8 @@
             dialect: { icon: '🗣️', name: '사투리', desc: '경상도 방언으로 생동감' },
             cynical: { icon: '🌑', name: '냉소적', desc: '어둡고 풍자적인 해석' },
             modern: { icon: '💻', name: '현대적', desc: '현대 언어와 문화 참조' },
-            poetic: { icon: '✨', name: '시적', desc: '서정적이고 문학적 표현' }
+            poetic: { icon: '✨', name: '시적', desc: '서정적이고 문학적 표현' },
+            radical: { icon: '🔥', name: '파격적', desc: '원작 파괴, 완전한 자유 스토리' }
         };
 
         let selectedPersona = null;
@@ -444,6 +526,9 @@
             if (data.type === 'thinking') {
                 // 생각 중 메시지는 임시로 표시 (Typing Indicator)
                 addTypingIndicator();
+            } else if (data.type === 'log') {
+                addLog(data.message);
+                return; // 로그는 채팅창에 영향을 주지 않음
             } else {
                 // 생각 중 메시지 제거
                 removeTypingIndicator();
@@ -527,6 +612,22 @@
         document.getElementById('userInput').onkeypress = (e) => {
             if (e.key === 'Enter') sendMessage();
         };
+
+        // Log Toggle
+        document.getElementById('logToggleBtn').onclick = () => {
+            const panel = document.getElementById('logPanel');
+            panel.classList.toggle('active');
+        };
+
+        function addLog(message) {
+            const logContent = document.getElementById('logContent');
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            const time = new Date().toLocaleTimeString();
+            entry.textContent = `[${time}] ${message}`;
+            logContent.appendChild(entry);
+            logContent.scrollTop = logContent.scrollHeight;
+        }
     </script>
 </body>
 

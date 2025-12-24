@@ -238,6 +238,25 @@ async def websocket_endpoint(websocket: WebSocket, session_id: str):
             
             # 전역 lore_keeper 주입
             game_sessions[session_id] = GameSession(global_lore_keeper, persona_type)
+
+            # 로그 콜백 설정 (WebSocket으로 전송, Thread-Safe)
+            main_loop = asyncio.get_running_loop()
+            
+            def log_to_ws(msg):
+                async def send():
+                    try:
+                        await websocket.send_json({"type": "log", "message": msg})
+                    except:
+                        pass
+                
+                # 메인 루프에 코루틴 예약 via threadsafe
+                try:
+                    asyncio.run_coroutine_threadsafe(send(), main_loop)
+                except Exception as e:
+                    print(f"Log send failed: {e}")
+
+            game_sessions[session_id].dungeon_master.set_log_callback(log_to_ws)
+
             await game_sessions[session_id].initialize()
             
             # 환영 메시지

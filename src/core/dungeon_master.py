@@ -17,6 +17,10 @@ class DungeonMaster(ABC):
         """
         pass
 
+    def set_log_callback(self, callback) -> None:
+        """Sets a callback for logging messages."""
+        pass
+
     @abstractmethod
     def generate_story(self, user_input: str, context: List[str]) -> str:
         """

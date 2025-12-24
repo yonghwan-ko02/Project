@@ -12,13 +12,13 @@ from dotenv import load_dotenv
 load_dotenv()
 
 class DungeonMasterImpl(DungeonMaster):
-    def __init__(self, model_name: str = None, game_state: Optional[GameState] = None, persona_type: str = "classic"):
+    def __init__(self, model_name: str = None, game_state: Optional[GameState] = None, persona_type: str = "radical"):
         self.provider = os.getenv("AI_PROVIDER", "google").lower()
         api_key = os.getenv("GOOGLE_API_KEY")
 
         if self.provider == "local":
             # Local Ollama Setup
-            model_name = model_name or "llama3.1:8b-instruct-q4_K_M"
+            model_name = model_name or "qwen2.5:14b"
             print(f"[INFO] Initializing DungeonMaster with Local Ollama ({model_name})...")
             self.llm = ChatOllama(
                 model=model_name,
@@ -46,7 +46,19 @@ class DungeonMasterImpl(DungeonMaster):
         
         # Memory Management
         self.conversation_history: List[dict] = []  # Short-term memory (Exact turns)
-        self.long_term_memory: str = "아직 기록된 킨 역사가 없습니다." # Long-term memory (Summary)
+        self.long_term_memory: str = "아직 기록된 역사가 없습니다." # Long-term memory (Summary)
+        self.log_callback = None
+
+    def set_log_callback(self, callback) -> None:
+        self.log_callback = callback
+    
+    def log(self, message: str):
+        print(message)
+        if self.log_callback:
+            try:
+                self.log_callback(message)
+            except:
+                pass
 
     def set_system_prompt(self, prompt: str) -> None:
         """시스템 프롬프트를 직접 설정 (커스텀 프롬프트용)"""
@@ -82,13 +94,13 @@ class DungeonMasterImpl(DungeonMaster):
         return self.persona_manager.get_persona_description(target_persona)
 
     def generate_story(self, user_input: str, context: List[str]) -> str:
+        self.log(f"[DungeonMaster] Processing user input: '{user_input}'")
+        self.log(f"[DungeonMaster] Context retrieved: {len(context)} chunks")
+
         # 1. Memory Management (Summarize if too long)
         if len(self.conversation_history) > 5:
             self._summarize_old_memories()
 
-        # Context formatting
-        context_str = "\n".join(context) if context else "원작 콩쥐팥쥐 이야기를 참고하세요."
-        
         # Add game state information if available
         state_info = ""
         scene_info = ""
@@ -102,6 +114,14 @@ class DungeonMasterImpl(DungeonMaster):
             
             state_info = f"\n\n[게임 상태] 리부트 점수: {score}/100, 현재 경로: {ending.value}"
             scene_info = f"\n[현재 챕터 상황]: {current_chapter}\n이 챕터의 갈등(과제)을 해결하면 다음 챕터로 진행됩니다."
+
+        # RAG Context Logic (Loose constraint for radical mode)
+        context_str = "\n".join(context) if context else "원작 콩쥐팥쥐 이야기를 참고하세요."
+        rag_instruction = "배경 지식:\n" + context_str
+        
+        if self.current_persona == "radical":
+            rag_instruction = f"참고 배경 지식 (필요시에만 사용하고, 무시해도 됩니다):\n{context_str}\n\n[주의] '파격적' 모드입니다. 위 배경 지식에 얽매이지 말고 새로운 스토리를 창조하세요."
+
 
         # Add conversation history context
         history_str = ""
@@ -119,8 +139,7 @@ class DungeonMasterImpl(DungeonMaster):
         # Construct messages
         messages = [
             SystemMessage(content=self.system_prompt),
-            HumanMessage(content=f"""배경 지식:
-{context_str}
+            HumanMessage(content=f"""{rag_instruction}
 {state_info}
 {scene_info}
 {history_str}
@@ -150,7 +169,7 @@ class DungeonMasterImpl(DungeonMaster):
         
         # Check for Scene Resolution Tag
         if "[SCENE_RESOLVED]" in content:
-            print(f"[DungeonMaster] Scene Resolution Detected!")
+            self.log(f"[DungeonMaster] Scene Resolution Detected!")
             # Remove tag from display
             content = content.replace("[SCENE_RESOLVED]", "").strip()
             
@@ -179,7 +198,7 @@ class DungeonMasterImpl(DungeonMaster):
         for turn in old_turns:
             turns_text += f"Play: {turn['user']}\nDM: {turn['ai']}\n"
             
-        print(f"[Memory] Summarizing {len(old_turns)} old turns...")
+        self.log(f"[Memory] Summarizing {len(old_turns)} old turns...")
         
         summary_prompt = f"""
 현재까지의 이야기 요약:
@@ -200,10 +219,10 @@ class DungeonMasterImpl(DungeonMaster):
             
             # 성공했을 때만 리스트에서 제거 (데이터 보존)
             self.conversation_history = self.conversation_history[2:]
-            print(f"[Memory] Summary Updated: {self.long_term_memory}")
+            self.log(f"[Memory] Summary Updated: {self.long_term_memory}")
             
         except Exception as e:
-            print(f"[Memory] Summarization Failed: {e}")
+            self.log(f"[Memory] Summarization Failed: {e}")
             # 실패 시 리스트를 건드리지 않음 (다음 턴에 다시 시도됨)
 
     def generate_prologue(self, context: List[str]) -> str:

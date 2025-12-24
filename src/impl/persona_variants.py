@@ -8,6 +8,7 @@ DungeonMaster를 위한 다양한 캐릭터 페르소나 제공
 3. 냉소적: 어둡고 풍자적인 해석
 4. 현대적: 현대적 언어와 참조
 5. 시적: 서정적이고 문학적인 스타일
+6. 파격적: 원작 파괴, 완전한 자유 스토리
 """
 
 from typing import Dict
@@ -17,7 +18,7 @@ class PersonaManager:
     """페르소나 관리 클래스"""
     
     # 사용 가능한 페르소나 타입
-    PERSONA_TYPES = ["classic", "dialect", "cynical", "modern", "poetic"]
+    PERSONA_TYPES = ["classic", "dialect", "cynical", "modern", "poetic", "radical"]
     
     def __init__(self):
         """페르소나 매니저 초기화"""
@@ -31,6 +32,7 @@ class PersonaManager:
             "cynical": self._get_cynical_persona(),
             "modern": self._get_modern_persona(),
             "poetic": self._get_poetic_persona(),
+            "radical": self._get_radical_persona(),
         }
     
     def get_persona(self, persona_type: str) -> str:
@@ -38,7 +40,7 @@ class PersonaManager:
         지정된 페르소나 타입에 대한 시스템 프롬프트 반환
         
         Args:
-            persona_type: 페르소나 타입 (classic, dialect, cynical, modern, poetic)
+            persona_type: 페르소나 타입 (classic, dialect, cynical, modern, poetic, radical)
         
         Returns:
             시스템 프롬프트 문자열
@@ -66,6 +68,7 @@ class PersonaManager:
             "cynical": "🌑 냉소적 - 어둡고 풍자적인 현대적 해석",
             "modern": "💻 현대적 - 현대 언어와 문화 참조",
             "poetic": "✨ 시적 - 서정적이고 문학적인 표현",
+            "radical": "🔥 파격적 - 원작 파괴, 완전한 자유 스토리",
         }
         return descriptions.get(persona_type, "알 수 없는 페르소나")
     
@@ -201,6 +204,31 @@ class PersonaManager:
 - 답변은 항상 한국어로 작성
 - 아름답지만 이해하기 쉽게 (200-300자 정도)
 - 플레이어의 감성을 자극하는 선택지 제시"""
+
+    def _get_radical_persona(self) -> str:
+        """파격적 (Radical) 페르소나"""
+        return """당신은 '전래동화 리부트: 콩쥐의 선택'의 파격적인 던전 마스터입니다.
+
+**역할:**
+- 콩쥐팥쥐 이야기의 설정만 차용하고, 내용은 완전히 자유롭게 전개합니다.
+- **플레이어의 선택이 원작을 파괴하더라도 무조건 수용하고 이야기를 확장하세요.**
+- 장르 변경 가능 (스릴러, 호러, SF, 무협 등 플레이어의 행동에 따라 유동적 변화)
+
+**스타일:**
+- 예측 불가능하고 충격적인 전개
+- 기존 통념을 깨는 반전
+- 플레이어의 창의적인 시도를 적극 권장
+
+**예시:**
+- "콩쥐가 독을 깨뜨리자 그 안에서 도깨비가 튀어나왔다! '자유다!'"
+- "새어머니에게 반기를 든 콩쥐는 마을 혁명군을 조직하기 시작했다."
+- "잔치에 가는 대신 콩쥐는 산속으로 들어가 무공을 연마하기로 결심했다."
+
+**중요:**
+- **원작의 흐름에 구애받지 마세요.**
+- 답변은 항상 한국어로 작성
+- 흥미진진하고 자극적인 서술 (200-300자 정도)
+- 상상력을 자극하는 선택지 제시"""
 
 
 # 싱글톤 인스턴스
