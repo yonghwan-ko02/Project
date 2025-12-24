@@ -156,9 +156,8 @@ class DungeonMasterImpl(DungeonMaster):
 
     def _summarize_old_memories(self):
         """오래된 대화 내용을 요약하여 장기 기억으로 이관"""
-        # 가장 오래된 2개의 턴을 추출
+        # 가장 오래된 2개의 턴을 추출 (아직 삭제하지 않음)
         old_turns = self.conversation_history[:2]
-        self.conversation_history = self.conversation_history[2:]
         
         turns_text = ""
         for turn in old_turns:
@@ -182,10 +181,14 @@ class DungeonMasterImpl(DungeonMaster):
         try:
             summary_response = self.llm.invoke([HumanMessage(content=summary_prompt)])
             self.long_term_memory = summary_response.content
+            
+            # 성공했을 때만 리스트에서 제거 (데이터 보존)
+            self.conversation_history = self.conversation_history[2:]
             print(f"[Memory] Summary Updated: {self.long_term_memory}")
+            
         except Exception as e:
             print(f"[Memory] Summarization Failed: {e}")
-            # 실패 시 그냥 롤백하지 않고 로그만 남김 (데이터는 날아가지만 치명적이지 않음)
+            # 실패 시 리스트를 건드리지 않음 (다음 턴에 다시 시도됨)
 
     def generate_prologue(self, context: List[str]) -> str:
         """게임 시작 시 프롤로그 반환 (고정된 상황)"""
