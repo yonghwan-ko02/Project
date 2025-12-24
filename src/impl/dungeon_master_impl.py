@@ -4,6 +4,7 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_ollama import ChatOllama
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.messages import SystemMessage, HumanMessage
+from langchain_google_genai import ChatGoogleGenerativeAI, HarmBlockThreshold, HarmCategory
 from src.core.dungeon_master import DungeonMaster
 from src.core.game_state import GameState
 from src.impl.persona_variants import get_persona_manager
@@ -34,8 +35,14 @@ class DungeonMasterImpl(DungeonMaster):
             print(f"[INFO] Initializing DungeonMaster with Google Gemini ({model_name})...")
             self.llm = ChatGoogleGenerativeAI(
                 model=model_name, 
-                temperature=0.4,
-                google_api_key=api_key
+                temperature=0.7, # Slightly higher for creativity
+                google_api_key=api_key,
+                safety_settings={
+                    HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_NONE,
+                    HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_NONE,
+                    HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_NONE,
+                    HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_NONE,
+                }
             )
 
         self.persona_manager = get_persona_manager()
@@ -66,9 +73,15 @@ class DungeonMasterImpl(DungeonMaster):
             print(f"[INFO] Updating API Key to user provided key...")
             # Re-initialize Google Gemini with new key
             self.llm = ChatGoogleGenerativeAI(
-                model="gemini-2.0-flash", # or whatever target model
-                temperature=0.4,
-                google_api_key=new_api_key
+                model="gemini-2.0-flash", 
+                temperature=0.7,
+                google_api_key=new_api_key,
+                safety_settings={
+                    HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_NONE,
+                    HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_NONE,
+                    HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_NONE,
+                    HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_NONE,
+                }
             )
             # Provider forced to google (since they provided a key)
             self.provider = "google"
@@ -187,6 +200,11 @@ class DungeonMasterImpl(DungeonMaster):
             response = self.llm.invoke(messages)
             print(f"[DEBUG] LLM Response received. Content length: {len(response.content)}")
             content = response.content
+            
+            if not content:
+                print("[WARN] LLM returned empty content (Likely Safety Filter).")
+                return "⚠️ AI가 답변을 거부했습니다. (안전 필터에 걸렸거나 응답이 비어있습니다.) 다른 행동을 시도해보세요."
+
         except Exception as e:
             print(f"[ERR] LLM Invoke Failed: {e}")
             # Re-raise explicitely for web_server.py to catch (e.g. 429 Quota Error)
