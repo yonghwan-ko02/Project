@@ -32,7 +32,38 @@ class DungeonMasterImpl(DungeonMaster):
         self.conversation_history: List[dict] = []  # Short-term memory (Exact turns)
         self.long_term_memory: str = "아직 기록된 킨 역사가 없습니다." # Long-term memory (Summary)
 
-    # ... (Keep existing methods: set_system_prompt, set_persona, get_current_persona, list_available_personas, get_persona_description) ...
+    def set_system_prompt(self, prompt: str) -> None:
+        """시스템 프롬프트를 직접 설정 (커스텀 프롬프트용)"""
+        self.system_prompt = prompt
+        self.current_persona = "custom"
+    
+    def set_persona(self, persona_type: str) -> None:
+        """
+        페르소나 타입을 설정하고 시스템 프롬프트 업데이트
+        
+        Args:
+            persona_type: 페르소나 타입 (classic, dialect, cynical, modern, poetic)
+        
+        Raises:
+            ValueError: 유효하지 않은 페르소나 타입인 경우
+        """
+        self.system_prompt = self.persona_manager.get_persona(persona_type)
+        self.current_persona = persona_type
+    
+    def get_current_persona(self) -> str:
+        """현재 설정된 페르소나 타입 반환"""
+        return self.current_persona
+    
+    def list_available_personas(self) -> list:
+        """사용 가능한 페르소나 목록 반환"""
+        return self.persona_manager.list_personas()
+    
+    def get_persona_description(self, persona_type: str = None) -> str:
+        """페르소나 설명 반환 (타입 미지정 시 현재 페르소나)"""
+        target_persona = persona_type if persona_type else self.current_persona
+        if target_persona == "custom":
+            return "🎨 커스텀 - 사용자 정의 프롬프트"
+        return self.persona_manager.get_persona_description(target_persona)
 
     def generate_story(self, user_input: str, context: List[str]) -> str:
         # 1. Memory Management (Summarize if too long)
