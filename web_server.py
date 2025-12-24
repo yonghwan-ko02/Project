@@ -305,24 +305,19 @@ async def websocket_endpoint(websocket: WebSocket, session_id: str):
             data = await websocket.receive_json()
             user_input = data.get("message", "")
             
-            if not user_input:
-                continue
-            
-            # 사용자 메시지 에코 및 생각 중 표시는 클라이언트에서 즉시 처리함 (Optimistic UI)
-            # 따라서 서버에서는 바로 처리 로직으로 진입
-            
-            # API Key 처리 (BYOK)
+            # API Key 처리 (BYOK) - 메시지 내용 없어도 처리해야 함
             if data.get("type") == "api_key":
                 new_key = data.get("key")
                 if not new_key:
                     continue
                 
                 # 1. Update DungeonMaster (Generation)
-                dm_success = await asyncio.to_thread(session.dungeon_master.update_api_key, new_key)
+                dm_result = await asyncio.to_thread(session.dungeon_master.update_api_key, new_key)
+                dm_success, dm_msg = dm_result if isinstance(dm_result, tuple) else (dm_result, "Unknown")
                 
                 # 2. Update LoreKeeper (Retrieval/Embeddings)
-                # Note: This updates the global singleton, affecting all users (Trade-off for simplicity)
-                lk_success = await asyncio.to_thread(session.lore_keeper.update_api_key, new_key)
+                lk_result = await asyncio.to_thread(session.lore_keeper.update_api_key, new_key)
+                lk_success, lk_msg = lk_result if isinstance(lk_result, tuple) else (lk_result, "Unknown")
                 
                 if dm_success and lk_success:
                     await websocket.send_json({
@@ -336,35 +331,37 @@ async def websocket_endpoint(websocket: WebSocket, session_id: str):
                         retry_input = session.last_failed_input
                         session.last_failed_input = None # Clear immediately to prevent loop
                         
-                        # Notify client that we are thinking again
                         await websocket.send_json({
                             "type": "thinking",
                             "message": "🤔 AI가 다시 생각하는 중..."
                         })
                         
                         try:
-                            # Process the failed input again with Timeout (30s)
-                            # to prevent indefinite hanging
                             response = await asyncio.wait_for(session.process_input(retry_input), timeout=30.0)
                             await websocket.send_json(response)
                         except asyncio.TimeoutError:
-                            print(f"[ERR] Auto-retry timed out for input: {retry_input}")
-                            await websocket.send_json({
+                             await websocket.send_json({
                                 "type": "error",
                                 "message": "❌ 응답 시간이 초과되었습니다. 다시 시도해주세요."
                             })
                         except Exception as e:
-                            print(f"[ERR] Auto-retry failed: {e}")
                             await websocket.send_json({
                                 "type": "error",
                                 "message": f"❌ 오류 발생: {str(e)}"
                             })
-                        
                 else:
+                    error_details = []
+                    if not dm_success: error_details.append(f"DM: {dm_msg}")
+                    if not lk_success: error_details.append(f"DB: {lk_msg}")
+                    
                     await websocket.send_json({
                         "type": "error", 
-                        "message": "❌ 유효하지 않은 API Key입니다."
+                        "message": f"❌ API Key 업데이트 실패: {', '.join(error_details)}"
                     })
+                continue
+
+            # 일반 메시지 내용 확인 (빈 내용은 무시)
+            if not user_input:
                 continue
 
             # 입력 처리
@@ -387,4 +384,5 @@ if __name__ == "__main__":
     import uvicorn
     # Cloud environments (Render) provide PORT env var
     port = int(os.environ.get("PORT", 8000))
+    # Revert to standard execution for stability
     uvicorn.run(app, host="0.0.0.0", port=port)

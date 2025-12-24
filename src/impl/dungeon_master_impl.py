@@ -86,10 +86,10 @@ class DungeonMasterImpl(DungeonMaster):
             # Provider forced to google (since they provided a key)
             self.provider = "google"
             self.log("✅ API Key updated successfully. Switched to Google Gemini.")
-            return True
+            return True, "Success"
         except Exception as e:
             self.log(f"❌ Failed to update API Key: {e}")
-            return False
+            return False, str(e)
 
     def set_system_prompt(self, prompt: str) -> None:
         """시스템 프롬프트를 직접 설정 (커스텀 프롬프트용)"""

@@ -76,19 +76,27 @@ class LoreKeeperImpl(LoreKeeper):
                 google_api_key=new_api_key
             )
             
-            # Re-create vector store with new embeddings if it exists
-            # (Safest way to ensure the new key is used)
-            if self.documents and self.db_path:
-                 print("[INFO] LoreKeeper: Re-initializing Vector Store...")
-                 self.vector_store = Chroma.from_documents(
-                    documents=self.documents,
-                    embedding=self.embeddings,
-                    collection_name="kongjwi_story",
-                    persist_directory=self.db_path
+            # Re-initialize embeddings with new key
+            self.embeddings = GoogleGenerativeAIEmbeddings(
+                model=self.model_name or "models/text-embedding-004",
+                google_api_key=new_api_key
+            )
+            
+            # Re-create vector store with new embeddings (Lightweight Reload)
+            # Do NOT use from_documents (it re-indexes). Just reload from disk with new func.
+            if self.db_path:
+                 print("[INFO] LoreKeeper: Reloading Vector Store with new credentials...")
+                 self.vector_store = Chroma(
+                    persist_directory=self.db_path,
+                    embedding_function=self.embeddings,
+                    collection_name="kongjwi_story"
                 )
                 
             print("[OK] LoreKeeper API Key updated successfully.")
-            return True
+            return True, "Success"
+        except Exception as e:
+            print(f"[ERR] Failed to update LoreKeeper API Key: {e}")
+            return False, str(e)
         except Exception as e:
             print(f"[ERR] Failed to update LoreKeeper API Key: {e}")
             return False
