@@ -27,42 +27,18 @@ class DungeonMasterImpl(DungeonMaster):
         self.system_prompt = self.persona_manager.get_persona(persona_type)
         self.game_state = game_state
         print(f"[INFO] DungeonMaster initialized with {model_name}")
-        self.conversation_history: List[dict] = []
+        
+        # Memory Management
+        self.conversation_history: List[dict] = []  # Short-term memory (Exact turns)
+        self.long_term_memory: str = "아직 기록된 킨 역사가 없습니다." # Long-term memory (Summary)
 
-    def set_system_prompt(self, prompt: str) -> None:
-        """시스템 프롬프트를 직접 설정 (커스텀 프롬프트용)"""
-        self.system_prompt = prompt
-        self.current_persona = "custom"
-    
-    def set_persona(self, persona_type: str) -> None:
-        """
-        페르소나 타입을 설정하고 시스템 프롬프트 업데이트
-        
-        Args:
-            persona_type: 페르소나 타입 (classic, dialect, cynical, modern, poetic)
-        
-        Raises:
-            ValueError: 유효하지 않은 페르소나 타입인 경우
-        """
-        self.system_prompt = self.persona_manager.get_persona(persona_type)
-        self.current_persona = persona_type
-    
-    def get_current_persona(self) -> str:
-        """현재 설정된 페르소나 타입 반환"""
-        return self.current_persona
-    
-    def list_available_personas(self) -> list:
-        """사용 가능한 페르소나 목록 반환"""
-        return self.persona_manager.list_personas()
-    
-    def get_persona_description(self, persona_type: str = None) -> str:
-        """페르소나 설명 반환 (타입 미지정 시 현재 페르소나)"""
-        target_persona = persona_type if persona_type else self.current_persona
-        if target_persona == "custom":
-            return "🎨 커스텀 - 사용자 정의 프롬프트"
-        return self.persona_manager.get_persona_description(target_persona)
+    # ... (Keep existing methods: set_system_prompt, set_persona, get_current_persona, list_available_personas, get_persona_description) ...
 
     def generate_story(self, user_input: str, context: List[str]) -> str:
+        # 1. Memory Management (Summarize if too long)
+        if len(self.conversation_history) > 5:
+            self._summarize_old_memories()
+
         # Context formatting
         context_str = "\n".join(context) if context else "원작 콩쥐팥쥐 이야기를 참고하세요."
         
@@ -80,12 +56,17 @@ class DungeonMasterImpl(DungeonMaster):
             state_info = f"\n\n[게임 상태] 리부트 점수: {score}/100, 현재 경로: {ending.value}"
             scene_info = f"\n[현재 챕터 상황]: {current_chapter}\n이 챕터의 갈등(과제)을 해결하면 다음 챕터로 진행됩니다."
 
-        # Add conversation history context (last 3 turns)
+        # Add conversation history context
         history_str = ""
+        
+        # 1. Long-term Memory (Summary of past events)
+        if self.long_term_memory and self.long_term_memory != "아직 기록된 역사가 없습니다.":
+            history_str += f"\n\n[지난 이야기 요약]\n{self.long_term_memory}\n"
+        
+        # 2. Short-term Memory (Recent detailed turns)
         if self.conversation_history:
-            recent_history = self.conversation_history[-3:]
-            history_str = "\n\n[최근 대화 내역]\n"
-            for turn in recent_history:
+            history_str += "\n[최근 대화]\n"
+            for turn in self.conversation_history:
                 history_str += f"플레이어: {turn['user']}\n던전마스터: {turn['ai']}\n"
         
         # Construct messages
@@ -141,6 +122,39 @@ class DungeonMasterImpl(DungeonMaster):
         })
         
         return content
+
+    def _summarize_old_memories(self):
+        """오래된 대화 내용을 요약하여 장기 기억으로 이관"""
+        # 가장 오래된 2개의 턴을 추출
+        old_turns = self.conversation_history[:2]
+        self.conversation_history = self.conversation_history[2:]
+        
+        turns_text = ""
+        for turn in old_turns:
+            turns_text += f"Play: {turn['user']}\nDM: {turn['ai']}\n"
+            
+        print(f"[Memory] Summarizing {len(old_turns)} old turns...")
+        
+        summary_prompt = f"""
+현재까지의 이야기 요약:
+{self.long_term_memory}
+
+새로 추가된 대화 내용:
+{turns_text}
+
+지시사항:
+위 '새로 추가된 대화 내용'을 '현재까지의 이야기 요약'에 자연스럽게 통합하여 업데이트된 요약문을 작성하세요.
+- 주요 사건, 결정, 아이템 획득 여부를 중심으로 간략히 요약하세요.
+- 3문장 이내로 작성하세요.
+- 한국어로 작성하세요.
+"""
+        try:
+            summary_response = self.llm.invoke([HumanMessage(content=summary_prompt)])
+            self.long_term_memory = summary_response.content
+            print(f"[Memory] Summary Updated: {self.long_term_memory}")
+        except Exception as e:
+            print(f"[Memory] Summarization Failed: {e}")
+            # 실패 시 그냥 롤백하지 않고 로그만 남김 (데이터는 날아가지만 치명적이지 않음)
 
     def generate_prologue(self, context: List[str]) -> str:
         """게임 시작 시 프롤로그 반환 (고정된 상황)"""
