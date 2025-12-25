@@ -72,6 +72,7 @@ class GameSession:
         self.turn_count = 0
         self.initialized = False
         self.last_failed_input = None
+        self.user_api_key = None
     
     async def initialize(self):
         """게임 초기화"""
@@ -97,7 +98,7 @@ class GameSession:
         # 일반 게임 입력 처리
         try:
             # RAG 검색 (비동기 실행으로 변경하여 UI 블로킹 방지)
-            context = await asyncio.to_thread(self.lore_keeper.retrieve, user_input)
+            context = await asyncio.to_thread(self.lore_keeper.retrieve, user_input, 3, self.user_api_key)
             
             # AI 스토리 생성 (비동기 실행)
             story_segment = await asyncio.to_thread(self.dungeon_master.generate_story, user_input, context)
@@ -336,6 +337,9 @@ async def websocket_endpoint(websocket: WebSocket, session_id: str):
                      lk_success, lk_msg = False, "DB Update Timeout"
                 
                 if dm_success and lk_success:
+                    # Save Key to Session
+                    session.user_api_key = new_key
+                    
                     await websocket.send_json({
                         "type": "system", 
                         "message": "✅ API Key가 성공적으로 업데이트되었습니다! 게임을 계속합니다."

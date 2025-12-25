@@ -66,40 +66,27 @@ class LoreKeeperImpl(LoreKeeper):
                     raise
 
     def update_api_key(self, new_api_key: str) -> bool:
-        """BYOK: Update API Key for embeddings"""
+        """BYOK: Validate API Key (Stateless Check)"""
+        # NOTE: We do NOT update self.api_key or self.embeddings here anymore.
+        # This prevents polluting the global singleton with a user-specific key.
+        # Instead, we just verify the key works.
         try:
-            print(f"[INFO] LoreKeeper: Updating API Key for embeddings...")
-            self.api_key = new_api_key
-            # Re-initialize embeddings with new key
-            self.embeddings = GoogleGenerativeAIEmbeddings(
+            print(f"[INFO] LoreKeeper: Verifying User API Key...")
+            
+            # Temporary test instance
+            test_embeddings = GoogleGenerativeAIEmbeddings(
                 model=self.model_name or "models/text-embedding-004",
                 google_api_key=new_api_key
             )
             
-            # Re-initialize embeddings with new key
-            self.embeddings = GoogleGenerativeAIEmbeddings(
-                model=self.model_name or "models/text-embedding-004",
-                google_api_key=new_api_key
-            )
+            # Try a simple embedding operation to validate key
+            test_embeddings.embed_query("Hello World")
             
-            # Re-create vector store with new embeddings (Lightweight Reload)
-            # Do NOT use from_documents (it re-indexes). Just reload from disk with new func.
-            if self.db_path:
-                 print("[INFO] LoreKeeper: Reloading Vector Store with new credentials...")
-                 self.vector_store = Chroma(
-                    persist_directory=self.db_path,
-                    embedding_function=self.embeddings,
-                    collection_name="kongjwi_story"
-                )
-                
-            print("[OK] LoreKeeper API Key updated successfully.")
+            print("[OK] User API Key verified successfully.")
             return True, "Success"
         except Exception as e:
-            print(f"[ERR] Failed to update LoreKeeper API Key: {e}")
+            print(f"[ERR] User API Key Verification Failed: {e}")
             return False, str(e)
-        except Exception as e:
-            print(f"[ERR] Failed to update LoreKeeper API Key: {e}")
-            return False
 
     def load_book(self, file_path: str) -> None:
         """
@@ -149,17 +136,50 @@ class LoreKeeperImpl(LoreKeeper):
             print("[WARN] Entering fallback mode (in-memory search only)")
             self.fallback_mode = True
 
-    def retrieve(self, query: str, top_k: int = 3) -> List[str]:
+    def retrieve(self, query: str, top_k: int = 3, api_key: str = None) -> List[str]:
         """
-        Retrieves relevant contexts with fallback to simple text search.
+        Retrieves relevant contexts.
+        Args:
+            query: The search query
+            top_k: Number of results to return
+            api_key: Optional user-provided API key for this specific request. 
+                     If provided, creates an isolated search context.
         """
-        if self.fallback_mode or not self.vector_store:
-            # Fallback: simple keyword search in documents
+        
+        # 0. Handle Fallback (No DB at all)
+        if self.fallback_mode:
             print("[WARN] Using fallback search (no vector DB)")
             return self._fallback_search(query, top_k)
         
+        target_store = self.vector_store
+
+        # 1. Handle User API Key (Isolation Logic)
+        if api_key:
+            # If user provided a key, we must NOT use the global vector_store (which uses global key)
+            # We create a lightweight temporary Chroma client pointing to the SAME data,
+            # but using the user's key for the embedding function.
+            try:
+                user_embeddings = GoogleGenerativeAIEmbeddings(
+                    model=self.model_name or "models/text-embedding-004",
+                    google_api_key=api_key
+                )
+                
+                target_store = Chroma(
+                    persist_directory=self.db_path,
+                    embedding_function=user_embeddings,
+                    collection_name="kongjwi_story"
+                )
+            except Exception as e:
+                print(f"[ERR] Failed to create user-specific vector store: {e}")
+                # If key was bad, it would fail here. Failsafe to fallback search.
+                return self._fallback_search(query, top_k)
+
+        # 2. Perform Search
+        if not target_store:
+             return self._fallback_search(query, top_k)
+
         try:
-            results = self.vector_store.similarity_search(query, k=top_k)
+            results = target_store.similarity_search(query, k=top_k)
             return [doc.page_content for doc in results]
         except Exception as e:
             print(f"[WARN] Vector search failed: {e}, using fallback")
