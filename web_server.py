@@ -312,29 +312,37 @@ async def websocket_endpoint(websocket: WebSocket, session_id: str):
                 if not new_key:
                     continue
                 
-                # 1. Update DungeonMaster (Generation) with Timeout (10s)
-                print("[INFO] Updating DungeonMaster Key...")
-                try:
-                    dm_result = await asyncio.wait_for(
-                        asyncio.to_thread(session.dungeon_master.update_api_key, new_key), 
-                        timeout=15.0
-                    )
-                    dm_success, dm_msg = dm_result if isinstance(dm_result, tuple) else (dm_result, "Unknown")
-                except asyncio.TimeoutError:
-                    print("[ERR] DungeonMaster Key Update Timed Out")
-                    dm_success, dm_msg = False, "Validation Timeout (Local)"
-                
-                # 2. Update LoreKeeper (Retrieval/Embeddings) with Timeout (5s)
-                print("[INFO] Updating LoreKeeper Key...")
-                try:
-                    lk_result = await asyncio.wait_for(
-                        asyncio.to_thread(session.lore_keeper.update_api_key, new_key),
-                        timeout=10.0
-                    )
-                    lk_success, lk_msg = lk_result if isinstance(lk_result, tuple) else (lk_result, "Unknown")
-                except asyncio.TimeoutError:
-                     print("[ERR] LoreKeeper Key Update Timed Out")
-                     lk_success, lk_msg = False, "DB Update Timeout"
+                # Define async wrappers for timeout handling
+                async def update_dm():
+                    try:
+                        print("[INFO] Updating DungeonMaster Key...")
+                        res = await asyncio.wait_for(
+                            asyncio.to_thread(session.dungeon_master.update_api_key, new_key), 
+                            timeout=30.0
+                        )
+                        return res if isinstance(res, tuple) else (res, "Unknown")
+                    except asyncio.TimeoutError:
+                        print("[ERR] DM Key Update Timeout")
+                        return False, "DM Timeout"
+                    except Exception as e:
+                        return False, f"DM Error: {e}"
+
+                async def update_lk():
+                    try:
+                        print("[INFO] Updating LoreKeeper Key...")
+                        res = await asyncio.wait_for(
+                            asyncio.to_thread(session.lore_keeper.update_api_key, new_key),
+                            timeout=10.0
+                        )
+                        return res if isinstance(res, tuple) else (res, "Unknown")
+                    except asyncio.TimeoutError:
+                        print("[ERR] LK Key Update Timeout")
+                        return False, "LK Timeout"
+                    except Exception as e:
+                        return False, f"LK Error: {e}"
+
+                # Execute in parallel
+                (dm_success, dm_msg), (lk_success, lk_msg) = await asyncio.gather(update_dm(), update_lk())
                 
                 if dm_success and lk_success:
                     # Save Key to Session
